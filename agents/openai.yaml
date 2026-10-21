@@ -1,0 +1,5 @@
+interface:
+  display_name: "跨境吴老师 AMAZON 广告搜索词优化 Skill"
+  short_description: "用领星商品推广搜索词数据生成活动转化倾斜交互看板"
+  default_prompt: "使用 $kuajing-wulaoshi-amazon-search-term-optimization 生成跨境吴老师AMAZON广告搜索词优化看板。"
+
