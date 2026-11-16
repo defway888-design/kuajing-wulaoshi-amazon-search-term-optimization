@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render both stages of the fixed Wu Lao Shi search-term dashboard.
+"""Render the fixed Wu Lao Shi offline search-term dashboard.
 
 Only verified payloads and the bundled logo are injected into one HTML shell.
 Python standard library only; no MCP calls or operating-system-specific paths.
@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "e07890618e9f51d1013ddbc26d29314d2822e5d1dea0acd9978b90de4ba5b4cf"
+TEMPLATE_SHA256 = "be70cffa80330a33466d52aac3a02b48244af21fbe77f785a7d252758c8793af"
 
 
 class InputError(ValueError):
@@ -79,7 +79,7 @@ def date_string(value: object, where: str) -> str:
     return text
 
 
-def normalize(raw: dict, phase: str) -> dict:
+def normalize(raw: dict) -> dict:
     windows_in = require_list(raw.get("dateWindows"), "dateWindows")
     if [w.get("key") for w in windows_in if isinstance(w, dict)] != list(WINDOWS):
         raise InputError("dateWindows 必须依次包含 7天、14天、本月、上月")
@@ -118,7 +118,7 @@ def normalize(raw: dict, phase: str) -> dict:
             raise InputError("重复的 profileRef")
         site = nonempty(p.get("site"), f"profiles[{index}].site").upper()
         country = nonempty(p.get("country"), f"profiles[{index}].country")
-        currency = nonempty(p.get("currency"), f"profiles[{index}].currency") if phase == "final" else ""
+        currency = nonempty(p.get("currency"), f"profiles[{index}].currency")
         shop = nonempty(p.get("shop"), f"profiles[{index}].shop")
         if site in site_by_code and site_by_code[site] != (country, currency):
             raise InputError(f"站点 {site} 的国家或币种信息冲突")
@@ -130,12 +130,6 @@ def normalize(raw: dict, phase: str) -> dict:
     sites = [{"code": code, "country": pair[0], "currency": pair[1]} for code, pair in sorted(site_by_code.items())]
     if len({site["country"] for site in sites}) != len(sites):
         raise InputError("国家名称与站点代码无法唯一对应，不能只用国家筛选")
-    if phase == "selection":
-        if "rows" in raw or "coverage" in raw:
-            raise InputError("信息收集页只接受授权店铺清单，不得提前嵌入报告")
-        return {"sites": sites, "dateWindows": windows, "profiles": profiles,
-                "rows": [], "initialWindow": initial, "timezone": timezone}
-
     selected_window = raw.get("selectedWindow")
     if selected_window not in WINDOWS:
         raise InputError("正式看板必须指定第一阶段确认的统计日期")
@@ -248,9 +242,8 @@ def normalize(raw: dict, phase: str) -> dict:
                                  "store": profile_by_ref[selected_ref]["key"] if selected_ref else ""}}
 
 
-def render(raw: dict, phase: str) -> bytes:
-    payload = normalize(raw, phase)
-    payload["phase"] = phase
+def render(raw: dict) -> bytes:
+    payload = normalize(raw)
     template_bytes = TEMPLATE.read_bytes()
     digest = hashlib.sha256(template_bytes).hexdigest()
     if digest != TEMPLATE_SHA256:
@@ -272,7 +265,6 @@ def render(raw: dict, phase: str) -> bytes:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="经领星 MCP 验证的规范化 JSON")
-    parser.add_argument("--phase", required=True, choices=("selection", "final"), help="先筛选，后生成最终看板")
     parser.add_argument("--output", required=True, type=Path, help="单文件离线 HTML，必须在 Skill 包外")
     parser.add_argument("--check", action="store_true", help="只比较既有 HTML 与标准渲染结果")
     args = parser.parse_args()
@@ -286,7 +278,7 @@ def main() -> int:
         if ROOT == output or ROOT in output.parents:
             raise InputError("真实看板输出不得写入公开 Skill 包")
         raw = require_dict(json.loads(source.read_text(encoding="utf-8")), "输入 JSON")
-        generated = render(raw, args.phase)
+        generated = render(raw)
         if args.check:
             if output.read_bytes() != generated:
                 raise InputError("既有 HTML 与标准模板渲染结果不一致")

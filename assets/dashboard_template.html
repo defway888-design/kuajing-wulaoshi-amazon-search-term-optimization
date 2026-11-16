@@ -26,7 +26,6 @@ h1{margin:0;font-size:clamp(23px,2.5vw,31px);font-weight:800;line-height:1.24;ov
 .panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
 .filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-body.selection-mode .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
 .filter-card{min-width:0;display:grid;gap:6px;padding:10px;background:linear-gradient(145deg,rgba(183,126,193,.96),rgba(224,91,157,.94));border:1px solid #3f1a58;border-radius:9px}
 .filter-card label{font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
 .filter-card select{width:100%;min-width:0;min-height:39px;padding:8px 9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133}
@@ -34,9 +33,6 @@ body.selection-mode .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
 .filter-card.keyword-card{grid-column:1/-1}
 .filter-status{margin-top:10px;color:#2a1050;font-size:12px;font-weight:800;text-align:right}
 [hidden]{display:none!important}
-.selection-actions{display:grid;gap:9px;margin-top:12px;justify-items:start}
-.selection-actions p{margin:0;font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
-.selection-actions textarea{width:100%;min-height:110px;padding:9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133;resize:vertical}
 .detail-panel{min-height:530px}
 .detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .selected-term{color:var(--yellow);overflow-wrap:anywhere}
@@ -68,8 +64,8 @@ body.selection-mode .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
 .tooltip strong{display:block;margin-bottom:5px;color:var(--yellow);font-size:13px;overflow-wrap:anywhere}
 .tooltip div{overflow-wrap:anywhere}
 @media(max-width:1200px){.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:900px){.detail-panel{min-height:0}.reco-grid{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}body.selection-mode .filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.dash{padding:8px}.title-tile{align-items:flex-start;flex-direction:column;padding:16px}.title-actions{justify-content:space-between;width:100%}.brand-logo{width:153px;height:60px}.filters,body.selection-mode .filters{grid-template-columns:1fr}.panel{padding:12px}h1{font-size:24px}}
+@media(max-width:900px){.detail-panel{min-height:0}.reco-grid{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.dash{padding:8px}.title-tile{align-items:flex-start;flex-direction:column;padding:16px}.title-actions{justify-content:space-between;width:100%}.brand-logo{width:153px;height:60px}.filters{grid-template-columns:1fr}.panel{padding:12px}h1{font-size:24px}}
 </style>
 </head>
 <body>
@@ -92,7 +88,6 @@ body.selection-mode .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
       <div class="filter-card keyword-card" id="keywordCard"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
     </div>
     <div class="filter-status" id="filterStatus" aria-live="polite"></div>
-    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">运行并生成看板</button><p id="selectionHelp">确认统计日期、国家和店铺后，点击运行。</p></div>
   </section>
   <section class="panel detail-panel" id="detailPanel" aria-labelledby="detailTitle">
     <div class="detail-top">
@@ -113,8 +108,6 @@ const sites=PAYLOAD.sites;
 const dateWindows=PAYLOAD.dateWindows;
 const profiles=PAYLOAD.profiles;
 const rows=PAYLOAD.rows;
-const selectionMode=PAYLOAD.phase==="selection";
-document.body.classList.toggle("selection-mode",selectionMode);
 const initial=PAYLOAD.initialSelection||{};
 const state={date:initial.date||PAYLOAD.initialWindow,site:initial.site||"",store:initial.store||"",portfolio:initial.portfolio||"",campaign:initial.campaign||"",group:initial.group||"",selected:initial.keyword||""};
 const el=id=>document.getElementById(id);
@@ -135,13 +128,6 @@ function renderFilters(){
   if(!dateWindows.some(item=>item.key===state.date))state.date=PAYLOAD.initialWindow;
   dateSelect.value=state.date;
   const windowDef=dateWindows.find(item=>item.key===state.date);
-  if(selectionMode){
-    state.site=setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
-    const eligible=profiles.filter(p=>!state.site||p.site===state.site);
-    const storeOpts=eligible.map(p=>({value:p.key,label:profileLabel(p)}));
-    state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
-    return;
-  }
   const dateRows=rows.filter(r=>r.window===state.date);
   state.site=setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
   const siteRows=dateRows.filter(r=>!state.site||r.site===state.site);
@@ -153,10 +139,6 @@ function renderFilters(){
   state.campaign=setOptions(el("campaignFilter"),unique(portfolioRows.map(r=>r.campaign).filter(v=>v!=="活动信息不完整")).map(v=>({value:v,label:v})),state.campaign,"全部广告活动");
   const campaignRows=portfolioRows.filter(r=>!state.campaign||r.campaign===state.campaign);
   state.group=setOptions(el("groupFilter"),unique(campaignRows.map(r=>r.group).filter(Boolean)).map(v=>({value:v,label:v})),state.group,"全部广告组");
-}
-function profileLabel(p){
-  const same=profiles.filter(x=>x.shop===p.shop&&x.site===p.site);
-  return p.shop+" · "+p.site+(same.length>1?"（选项 "+(same.indexOf(p)+1)+"）":"");
 }
 function filteredRows(){
   const windowDef=dateWindows.find(item=>item.key===state.date);
@@ -291,13 +273,6 @@ function renderRecommendations(groups){
 }
 function render(){
   hideTooltip();
-  if(selectionMode){
-    const windowDef=dateWindows.find(item=>item.key===state.date);
-    const count=profiles.filter(p=>!state.site||p.site===state.site).filter(p=>!state.store||p.key===state.store).length;
-    el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(count)+" 个授权店铺可选";
-    el("selectionHelp").textContent="确认统计日期、国家和店铺后，点击运行。";
-    return;
-  }
   const source=filteredRows(),terms=aggregateTerms(source);
   const term=renderKeywordFilter(terms);
   const windowDef=dateWindows.find(item=>item.key===state.date);
@@ -317,30 +292,6 @@ function render(){
   }
   renderRecommendations(groups);
 }
-async function exportSelection(){
-  if(!selectionMode)return;
-  const country=state.site?(sites.find(s=>s.code===state.site)?.country||""):"";
-  const button=el("confirmSelection");button.disabled=true;
-  el("selectionHelp").textContent="正在提交筛选条件…";
-  try{
-    const response=await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:state.date,site:state.site,country,store:state.store})});
-    const result=await response.json();
-    if(!response.ok)throw new Error(result.message||"提交失败");
-    for(;;){
-      el("selectionHelp").textContent="正在读取所选范围的领星报告并生成看板…";
-      await new Promise(resolve=>setTimeout(resolve,2000));
-      const statusResponse=await fetch("/status",{cache:"no-store"});
-      const status=await statusResponse.json();
-      if(status.state==="ready"){location.href="/final";return;}
-      if(status.state==="error")throw new Error(status.message||"生成失败");
-    }
-  }catch(error){el("selectionHelp").textContent="无法继续："+error.message;button.disabled=false;}
-}
-el("selectionActions").hidden=!selectionMode;
-el("detailPanel").hidden=selectionMode;
-for(const id of ["portfolioCard","campaignCard","groupCard","keywordCard"])el(id).hidden=selectionMode;
-if(selectionMode){el("pageFooter").textContent="跨境吴老师 · 领星 MCP 广告授权店铺清单";}
-el("confirmSelection").addEventListener("click",exportSelection);
 el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
 el("countryFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
 el("storeFilter").addEventListener("change",event=>{state.store=event.target.value;state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
@@ -350,7 +301,7 @@ el("groupFilter").addEventListener("change",event=>{state.group=event.target.val
 el("keywordFilter").addEventListener("change",event=>{state.selected=event.target.value;render();});
 el("resetFilters").addEventListener("click",()=>{Object.assign(state,{date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""});renderFilters();render();});
 window.addEventListener("scroll",hideTooltip,{passive:true});
-window.addEventListener("resize",()=>{hideTooltip();if(!selectionMode)render();},{passive:true});
+window.addEventListener("resize",()=>{hideTooltip();render();},{passive:true});
 renderFilters();render();
 </script>
 </body>
