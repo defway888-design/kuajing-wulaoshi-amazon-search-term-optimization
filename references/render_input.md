@@ -1,76 +1,68 @@
-# 固定模板渲染输入契约
+# 两阶段渲染与按钮回传契约
 
-领星 MCP 查询、字段核验、分页和广告组合关联按 [数据契约](data_contract.md) 完成后，再将本次结果规范化为 UTF-8 JSON。该 JSON 放在 Skill 包外、当前执行者有权写入的目录；其中允许暂存本次源 ID 供渲染器校验和重新映射，不能上传到公开仓库。渲染器不连接 MCP，也不补齐缺失业务数据。同一份 JSON 先生成筛选页，收到用户选择后再生成正式看板。
+只使用当前平台的领星 MCP。输入、运行中选择、状态及 HTML 均写在 Skill 包外、当前执行者可写的本次新建运行目录。不得把源 ID、报告、凭据或看板提交到公开仓库。Python 3.8+ 标准库脚本不连接 MCP；广告接口由运行中的 Agent 调用。
 
-## 顶层字段
+## 第一阶段：授权清单与四项筛选
+
+先调用 `ad_auth_shops` 并验证全部授权 Profile。计算本次真实的四个日期窗口（`7天`、`14天`、`本月`、`上月`），按下列形状写授权输入；示意值不可作为真实输入：
 
 ```json
 {
-  "timezone": "Asia/Shanghai",
-  "initialWindow": "上月",
-  "dateWindows": [
+  "timezone":"Asia/Shanghai",
+  "initialWindow":"上月",
+  "dateWindows":[
     {"key":"7天","start":"2026-11-11","end":"2026-11-17"},
     {"key":"14天","start":"2026-11-04","end":"2026-11-17"},
     {"key":"本月","start":"2026-11-01","end":"2026-11-17"},
     {"key":"上月","start":"2026-10-01","end":"2026-10-31"}
   ],
-  "profiles": [
-    {"profileRef":"本次领星 Profile ID","site":"US","country":"美国","currency":"USD","shop":"授权店铺显示名"}
-  ],
-  "coverage": [
-    {"profileRef":"本次领星 Profile ID","window":"7天","status":"ok"}
-  ],
-  "rows": [
-    {"window":"7天","profileRef":"本次领星 Profile ID","query":"客户搜索词",
-     "portfolioStatus":"unassigned","portfolioRef":null,
-     "campaignRef":"本次领星活动 ID","campaign":"活动名称","group":"广告组名称",
-     "clicks":20,"spends":12.5,"cvr":5.0}
-  ]
+  "profiles":[{"profileRef":"当前授权 Profile ID","site":"US","country":"美国","shop":"当前授权店铺显示名"}]
 }
 ```
 
-上述值仅说明字段形状，不可直接用来生成正式看板。`coverage` 必须为**每个 Profile × 四个窗口**各有且仅有一条，`ok` 表示有真实明细，`zero` 表示经完整分页证实无明细；任一查询失败不能写 `zero`。`rows` 必须包含全部非总计明细，不能先聚合、去重或截取 Top10。每行的 `window`、`profileRef` 必须属于顶层清单，与 `coverage` 状态一致。
-
-## 字段规则
-
-- `profiles.profileRef`、`rows.campaignRef`、`rows.portfolioRef` 是本次源身份引用，只供渲染前区分同名实体。渲染器在输出中将 Profile 和活动映射为临时序号，并完全不写入源 ID。`site` 是站点代码；`country` 是经核实的国家显示名；`currency` 是可确定的币种代码或“站点货币”；`shop` 来自授权 `alias`。同一站点的国家与币种映射须一致。
-- `query` 为报告 `query` 去首尾空格后的客户搜索词；`campaign`、`group` 分别为报告的活动、广告组名。缺失活动名可传空字符串，渲染器标记信息不完整；缺失活动 ID 用 `null`，不会将同名活动擅自合并。缺失广告组名用空字符串，不能虚构名称。
-- `portfolioStatus` 只能是 `assigned` 或 `unassigned`。`assigned` 必须有本次真实组合 ID 的 `portfolioRef` 和经核验的 `portfolio` 名称；`unassigned` 仅在源数据明确证实活动未加入组合时使用，`portfolioRef` 必须为 `null`，无需 `portfolio`，页面统一显示“未加入广告组合”。字段缺失或关联失败不能记为 `unassigned`。
-- `clicks` 是非负整数。`spends` 是同一 Profile 原币种的非负数；来源缺失或不可解析时传 `null`，不可填 0。`cvr` 传**百分数值**，例如 5 表示 5%；若领星已证实返回 0–1 比例，先乘 100；单位无法证实时停止 CVR 分析。缺失、越界或不可解析时传 `null`，不能填 0。数值均须有限且在 JavaScript 安全范围内。
-- `dateWindows` 顺序严格为 `7天`、`14天`、`本月`、`上月`，每项使用本次执行日与时区计算的真实 `YYYY-MM-DD` 起止日。`initialWindow` 只允许四项之一；选定窗口无明细时，渲染器自动打开首个有明细的窗口。日期冻结于文件，不在浏览器打开时滚动。
-
-`coverage` 只证明取数范围，不写入页面源 ID。输入 JSON、筛选选择 JSON 和两份 HTML 都不得放进公开 Skill 包；本说明不指定任何操作系统绝对路径或创建者帐号数据。
-
-## 两阶段唯一执行方式
-
-在已安装本 Skill 且有 Python 3.8 或更高版本的运行环境中，将 `<skill-dir>` 换成当前安装位置，输入与输出均选当前执行者有权访问的包外文件路径。先执行：
+`profileRef` 仅用于 Agent 内部身份核对；渲染器把它重映射为 `p1` 等临时键，页面不含源 ID。第一阶段输入不得包含 `coverage` 或 `rows`，不得预查搜索词报告。国家显示名和站点映射必须经核实；同一站点的国家映射不能冲突。
 
 ```text
-python <skill-dir>/scripts/render_dashboard.py --phase selection --input <input-json> --output <selection-html>
-python <skill-dir>/scripts/render_dashboard.py --phase selection --input <input-json> --output <selection-html> --check
+python <skill-dir>/scripts/render_dashboard.py --phase selection --input <auth-input-json> --output <selection-html>
+python <skill-dir>/scripts/render_dashboard.py --phase selection --input <auth-input-json> --output <selection-html> --check
+python <skill-dir>/scripts/selection_bridge.py --input <auth-input-json> --page <selection-html> --choice <choice-json> --final <final-html> --status-file <status-json> --ready <ready-url-file>
 ```
 
-将筛选页 HTML 交给用户。页面内的八项筛选基于完整报告填充，指标只含客户搜索词点击量；活动花费、CVR、建议尚未计算。用户确认后，页面下载选择 JSON；下载受限时可从页面文本框复制。选择 JSON 的结构为：
+桥接脚本在 `127.0.0.1` 的动态端口启动，并将 URL 写入 `<ready-url-file>`。在当前运行环境的浏览器打开该 URL，不能以 `file://` 打开第一阶段页面。Agent 保持本次任务运行并等待内部选择文件出现；若平台不允许持续运行本地服务和等待用户点击，说明交互回传能力不足并停止，不能假装按钮已启动第二阶段。用户无需下载或上传文件。
+
+点击“运行并生成看板”后，页面以 `POST /run` 提交 `{date,site,country,store}`。服务仅接受同源提交，校验日期、站点／国家联动和店铺归属。空 `site`/`country` 表示全部站点／国家，空 `store` 表示当前站点范围内全部店铺。选择写入 Agent 内部 `<choice-json>`；这个文件不由用户处理。页面轮询 `/status`。失败时 Agent 将 `{"state":"error","message":"实际失败原因"}` 写入 `<status-json>`，由页面显示。
+
+## 第二阶段：所选范围的完整报告
+
+Agent 读取内部选择文件，在本次授权清单中核对临时店铺键，取得所选 Profile 集合。只对所选日期窗口 × 命中的每个 Profile 调用完整分页的商品推广搜索词报告；广告组合关联、数值清洗和停止条件按 [数据契约](data_contract.md)。不得把未选日期或店铺的数据写进正式输入。按下列形状写报告输入；示意值不可作为真实数据：
 
 ```json
 {
-  "version": 1,
-  "datasetDigest": "本次筛选页自动生成的 SHA-256 指纹",
-  "filters": {
-    "date": "上月", "site": "US", "country": "美国", "store": "p1",
-    "portfolio": "广告组合名称", "campaign": "广告活动名称",
-    "group": "广告组名称", "keyword": "客户搜索词的规范化键"
-  }
+  "timezone":"Asia/Shanghai",
+  "dateWindows":[
+    {"key":"7天","start":"2026-11-11","end":"2026-11-17"},
+    {"key":"14天","start":"2026-11-04","end":"2026-11-17"},
+    {"key":"本月","start":"2026-11-01","end":"2026-11-17"},
+    {"key":"上月","start":"2026-10-01","end":"2026-10-31"}
+  ],
+  "selectedWindow":"上月",
+  "selectedScope":{"date":"上月","site":"US","country":"美国","profileRef":"当前所选 Profile ID"},
+  "profiles":[{"profileRef":"当前所选 Profile ID","site":"US","country":"美国","currency":"USD","shop":"当前授权店铺显示名"}],
+  "coverage":[{"profileRef":"当前所选 Profile ID","window":"上月","status":"ok"}],
+  "rows":[{"window":"上月","profileRef":"当前所选 Profile ID","query":"客户搜索词",
+    "portfolioStatus":"unassigned","portfolioRef":null,
+    "campaignRef":"本次活动 ID","campaign":"活动名称","group":"广告组名称",
+    "clicks":20,"spends":12.5,"cvr":5.0}]
 }
 ```
 
-`site`、`store`、`portfolio`、`campaign`、`group` 可为 `""`，代表该维度全部；`country` 与 `site` 同为空或为对应国家名称。`store` 的 `p1` 等键是本次文件内临时序号，不是领星源 ID。选择 JSON 由页面生成，不能用示例内容代替。
+`selectedScope` 的 `date`、`site`、`country` 必须等于按钮提交值；若店铺选“全部”，`profileRef` 为 `null`，`profiles` 包含全部命中的授权 Profile。若选单店铺，`profileRef` 为其真实 ID，`profiles` 仅含该店铺。`coverage` 对每个所选 Profile 恰有一条；`ok` 为确有明细，`zero` 为经全分页确认无明细，失败不可写 `zero`。`rows` 保留全部非总计明细，不去重、不提前聚合、不截 Top10，且每行属于所选窗口与 Profile。所有 Profile 均零记录时停止。
 
-收到用户返回的选择 JSON 后，保留**同一份**输入 JSON，再执行：
+`query` 仅为客户搜索词。`clicks` 为非负整数；`spends` 和 `cvr` 缺失或不可解析时传 `null`，不得补零。`cvr` 为确认后的百分数值，5 表示 5%。`portfolioStatus=assigned` 时必须有真实 `portfolioRef` 和核验后的 `portfolio` 名称；`unassigned` 只用于已证明未加入组合的活动。活动 ID 仅用于区分同名实体；缺失可传 `null`，活动名缺失可传空字符串，不能臆造。货币必须有可靠来源或明确的站点货币标识。
 
 ```text
-python <skill-dir>/scripts/render_dashboard.py --phase final --input <input-json> --selection <user-selection-json> --output <final-html>
-python <skill-dir>/scripts/render_dashboard.py --phase final --input <input-json> --selection <user-selection-json> --output <final-html> --check
+python <skill-dir>/scripts/render_dashboard.py --phase final --input <report-input-json> --output <candidate-html>
+python <skill-dir>/scripts/render_dashboard.py --phase final --input <report-input-json> --output <candidate-html> --check
 ```
 
-渲染器核对数据指纹、日期、站点／国家联动、店铺和搜索词是否存在于同一筛选交集。正式文件以所选条件为初始视图，并保留本次完整报告供后续离线改筛选。筛选页和正式页必须使用**不同输出文件**；两阶段各自的 `--check` 均逐字节核对现有 HTML 与固定模板、本次 Logo 和本次数据。任何错误均停止，不手改输出 HTML 补救；缓存遗失或重新取数后须重新生成筛选页供用户选择。
+正式 HTML 先生成到临时文件并通过 `--check`；之后将其发布到服务参数指定的 `<final-html>`，最后把 `{"state":"ready"}` 写入 `<status-json>`。只有两个条件都满足，服务的 `/status` 才返回就绪，让浏览器打开 `/final`。正式文件本身是完整离线 HTML，不依赖桥接服务；另在对话中给出该文件链接。页面只含所选日期窗口的数据，若需其他窗口须重新运行第一阶段。两阶段均使用同一包内母版；模板指纹或逐字节校验失败时停止，不能手改 HTML 补救。

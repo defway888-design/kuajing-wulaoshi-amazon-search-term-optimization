@@ -1,4 +1,4 @@
 interface:
   display_name: "跨境吴老师 AMAZON 广告搜索词优化 Skill"
-  short_description: "领星全帐号搜索词先筛选，再生成同模板离线看板"
-  default_prompt: "使用 $kuajing-wulaoshi-amazon-search-term-optimization 读取全部授权站点与店铺的四个日期窗口商品推广客户搜索词，先交付八项筛选页；收到我确认的选择文件后，再用包内固定模板生成跨境吴老师离线看板。"
+  short_description: "授权店铺四项筛选，点击运行后生成领星搜索词离线看板"
+  default_prompt: "使用 $kuajing-wulaoshi-amazon-search-term-optimization 查询领星授权店铺，打开四项筛选页；我点击运行后，读取所选范围的商品推广搜索词并生成跨境吴老师离线看板。"

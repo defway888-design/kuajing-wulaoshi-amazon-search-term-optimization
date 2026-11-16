@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "575cfb7e9d6971281a0283abde0acbbbb9d9f87c65f7b3a3581496c2c37b604b"
+TEMPLATE_SHA256 = "d4e1fbef055d47ee5c5f36da94d124b9e9b55d57d0cd7cf3c81fc5c73597855c"
 
 
 class InputError(ValueError):
@@ -79,7 +79,7 @@ def date_string(value: object, where: str) -> str:
     return text
 
 
-def normalize(raw: dict) -> dict:
+def normalize(raw: dict, phase: str) -> dict:
     windows_in = require_list(raw.get("dateWindows"), "dateWindows")
     if [w.get("key") for w in windows_in if isinstance(w, dict)] != list(WINDOWS):
         raise InputError("dateWindows 必须依次包含 7天、14天、本月、上月")
@@ -118,7 +118,7 @@ def normalize(raw: dict) -> dict:
             raise InputError("重复的 profileRef")
         site = nonempty(p.get("site"), f"profiles[{index}].site").upper()
         country = nonempty(p.get("country"), f"profiles[{index}].country")
-        currency = nonempty(p.get("currency"), f"profiles[{index}].currency")
+        currency = nonempty(p.get("currency"), f"profiles[{index}].currency") if phase == "final" else ""
         shop = nonempty(p.get("shop"), f"profiles[{index}].shop")
         if site in site_by_code and site_by_code[site] != (country, currency):
             raise InputError(f"站点 {site} 的国家或币种信息冲突")
@@ -127,6 +127,33 @@ def normalize(raw: dict) -> dict:
         profiles.append(display)
         profile_by_ref[ref] = display
 
+    sites = [{"code": code, "country": pair[0], "currency": pair[1]} for code, pair in sorted(site_by_code.items())]
+    if phase == "selection":
+        if "rows" in raw or "coverage" in raw:
+            raise InputError("信息收集页只接受授权店铺清单，不得提前嵌入报告")
+        return {"sites": sites, "dateWindows": windows, "profiles": profiles,
+                "rows": [], "initialWindow": initial, "timezone": timezone}
+
+    selected_window = raw.get("selectedWindow")
+    if selected_window not in WINDOWS:
+        raise InputError("正式看板必须指定第一阶段确认的统计日期")
+    scope = require_dict(raw.get("selectedScope"), "selectedScope")
+    if set(scope) != {"date", "site", "country", "profileRef"} or scope["date"] != selected_window:
+        raise InputError("正式看板的选择范围与统计日期不一致")
+    if not isinstance(scope["site"], str) or not isinstance(scope["country"], str):
+        raise InputError("选择范围的站点或国家无效")
+    site_country = {s["code"]: s["country"] for s in sites}
+    if scope["site"] and scope["site"] not in site_country:
+        raise InputError("选择范围的站点无效")
+    if scope["country"] != site_country.get(scope["site"], ""):
+        raise InputError("选择范围的站点与国家不一致")
+    if scope["site"] and any(p["site"] != scope["site"] for p in profiles):
+        raise InputError("正式报告包含所选站点之外的店铺")
+    selected_ref = scope["profileRef"]
+    if selected_ref is not None:
+        selected_ref = reference(selected_ref, "selectedScope.profileRef")
+        if selected_ref not in profile_by_ref or len(profiles) != 1:
+            raise InputError("正式报告的店铺与用户选择不一致")
     coverage_in = require_list(raw.get("coverage"), "coverage")
     coverage = {}
     for index, value in enumerate(coverage_in):
@@ -134,19 +161,19 @@ def normalize(raw: dict) -> dict:
         ref = reference(item.get("profileRef"), f"coverage[{index}].profileRef")
         window = item.get("window")
         status = item.get("status")
-        if ref not in profile_by_ref or window not in WINDOWS or status not in ("ok", "zero"):
+        if ref not in profile_by_ref or window != selected_window or status not in ("ok", "zero"):
             raise InputError(f"coverage[{index}] 身份、窗口或状态无效")
         key = (ref, window)
         if key in coverage:
             raise InputError("coverage 中存在重复组合")
         coverage[key] = status
-    expected = {(ref, window) for ref in profile_by_ref for window in WINDOWS}
+    expected = {(ref, selected_window) for ref in profile_by_ref}
     if set(coverage) != expected:
-        raise InputError("coverage 未覆盖全部 Profile × 四个日期窗口")
+        raise InputError("coverage 未覆盖本次选择的全部 Profile")
 
     rows_in = require_list(raw.get("rows"), "rows")
     if not rows_in:
-        raise InputError("四个日期窗口均无搜索词明细")
+        raise InputError("所选范围没有搜索词明细")
     row_counts = {key: 0 for key in expected}
     rows = []
     campaign_keys = {}
@@ -156,7 +183,7 @@ def normalize(raw: dict) -> dict:
         row = require_dict(value, f"rows[{index}]")
         ref = reference(row.get("profileRef"), f"rows[{index}].profileRef")
         window = row.get("window")
-        if ref not in profile_by_ref or window not in WINDOWS:
+        if ref not in profile_by_ref or window != selected_window:
             raise InputError(f"rows[{index}] Profile 或窗口无效")
         row_counts[(ref, window)] += 1
         query = nonempty(row.get("query"), f"rows[{index}].query")
@@ -211,66 +238,17 @@ def normalize(raw: dict) -> dict:
         count = row_counts[key]
         if (status == "zero") != (count == 0):
             raise InputError("coverage 状态与实际明细行数冲突")
-    if not any(row["window"] == initial for row in rows):
-        initial = next(w for w in WINDOWS if any(row["window"] == w for row in rows))
-    sites = [{"code": code, "country": pair[0], "currency": pair[1]} for code, pair in sorted(site_by_code.items())]
-    return {"sites": sites, "dateWindows": windows, "profiles": profiles, "rows": rows,
-            "initialWindow": initial, "timezone": timezone}
+    return {"sites": sites, "dateWindows": [w for w in windows if w["key"] == selected_window],
+            "profiles": profiles, "rows": rows, "initialWindow": selected_window,
+            "timezone": timezone,
+            "initialSelection": {"date": selected_window, "site": scope["site"],
+                                 "country": scope["country"],
+                                 "store": profile_by_ref[selected_ref]["key"] if selected_ref else ""}}
 
 
-def dataset_digest(payload: dict) -> str:
-    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def selected_filters(raw: dict, payload: dict, digest: str) -> dict:
-    choice = require_dict(raw, "筛选选择")
-    if type(choice.get("version")) is not int or choice["version"] != 1 or choice.get("datasetDigest") != digest:
-        raise InputError("筛选选择与本次报告不匹配，请重新使用本次筛选页")
-    filters = require_dict(choice.get("filters"), "filters")
-    required = {"date", "site", "country", "store", "portfolio", "campaign", "group", "keyword"}
-    if set(filters) != required or any(not isinstance(filters[key], str) for key in required):
-        raise InputError("筛选选择的八项字段不完整")
-    if filters["date"] not in WINDOWS or not filters["keyword"]:
-        raise InputError("筛选日期或客户搜索词无效")
-    sites = {item["code"]: item["country"] for item in payload["sites"]}
-    if filters["site"] and filters["site"] not in sites:
-        raise InputError("筛选站点无效")
-    country = sites.get(filters["site"], "")
-    if filters["country"] != country:
-        raise InputError("站点与国家筛选不一致")
-    profile_keys = {item["key"] for item in payload["profiles"]}
-    if filters["store"] and filters["store"] not in profile_keys:
-        raise InputError("筛选店铺无效")
-    matching = [row for row in payload["rows"] if
-                row["window"] == filters["date"] and
-                (not filters["site"] or row["site"] == filters["site"]) and
-                (not filters["store"] or row["profile"] == filters["store"]) and
-                (not filters["portfolio"] or row["portfolio"] == filters["portfolio"]) and
-                (not filters["campaign"] or row["campaign"] == filters["campaign"]) and
-                (not filters["group"] or row["group"] == filters["group"]) and
-                row["query"].strip().lower() == filters["keyword"].lower()]
-    if not matching:
-        raise InputError("筛选组合无有效搜索词明细")
-    return filters
-
-
-def render(raw: dict, phase: str, selection: Optional[dict] = None) -> bytes:
-    payload = normalize(raw)
-    digest = dataset_digest(payload)
-    if phase == "selection":
-        if selection is not None:
-            raise InputError("筛选阶段不得加载已选条件")
-        payload["rows"] = [{key: row[key] for key in ("window", "query", "profile", "site", "country", "shop", "portfolio", "campaign", "group", "clicks")}
-                           for row in payload["rows"]]
-    elif phase == "final":
-        if selection is None:
-            raise InputError("最终看板必须先取得筛选页导出的选择文件")
-        payload["initialSelection"] = selected_filters(selection, payload, digest)
-    else:
-        raise InputError("phase 只能是 selection 或 final")
+def render(raw: dict, phase: str) -> bytes:
+    payload = normalize(raw, phase)
     payload["phase"] = phase
-    payload["datasetDigest"] = digest
     template_bytes = TEMPLATE.read_bytes()
     digest = hashlib.sha256(template_bytes).hexdigest()
     if digest != TEMPLATE_SHA256:
@@ -293,7 +271,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="经领星 MCP 验证的规范化 JSON")
     parser.add_argument("--phase", required=True, choices=("selection", "final"), help="先筛选，后生成最终看板")
-    parser.add_argument("--selection", type=Path, help="筛选页导出的选择 JSON；final 阶段必填")
     parser.add_argument("--output", required=True, type=Path, help="单文件离线 HTML，必须在 Skill 包外")
     parser.add_argument("--check", action="store_true", help="只比较既有 HTML 与标准渲染结果")
     args = parser.parse_args()
@@ -302,24 +279,12 @@ def main() -> int:
         output = args.output.resolve()
         if source == output:
             raise InputError("HTML 输出不能覆盖本次报告输入 JSON")
-        if args.phase == "selection" and args.selection is not None:
-            raise InputError("筛选阶段不接受选择文件")
-        if args.phase == "final" and args.selection is None:
-            raise InputError("最终看板缺少筛选选择文件")
         if ROOT == source or ROOT in source.parents:
             raise InputError("含源身份的输入 JSON 不得写入公开 Skill 包")
         if ROOT == output or ROOT in output.parents:
             raise InputError("真实看板输出不得写入公开 Skill 包")
-        selected = None
-        if args.selection is not None:
-            selection_path = args.selection.resolve()
-            if selection_path == output or selection_path == source:
-                raise InputError("选择文件、报告缓存和 HTML 输出必须使用不同文件")
-            if ROOT == selection_path or ROOT in selection_path.parents:
-                raise InputError("筛选选择文件不得写入公开 Skill 包")
-            selected = require_dict(json.loads(selection_path.read_text(encoding="utf-8")), "筛选选择")
         raw = require_dict(json.loads(source.read_text(encoding="utf-8")), "输入 JSON")
-        generated = render(raw, args.phase, selected)
+        generated = render(raw, args.phase)
         if args.check:
             if output.read_bytes() != generated:
                 raise InputError("既有 HTML 与标准模板渲染结果不一致")

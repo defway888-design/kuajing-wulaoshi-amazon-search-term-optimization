@@ -77,7 +77,7 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
   <header class="tile title-tile">
     <h1>跨境吴老师AMAZON广告搜索词优化看板</h1>
     <div class="title-actions">
-      <span class="demo-badge">领星真实数据</span>
+      <span class="demo-badge" id="dataBadge">领星真实数据</span>
       <span class="brand-logo"><img src="data:image/jpeg;base64,__LOGO_BASE64__" alt="跨境吴老师 Logo"></span>
     </div>
   </header>
@@ -88,13 +88,13 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
       <div class="filter-card"><label for="siteFilter">站点</label><select id="siteFilter"></select></div>
       <div class="filter-card"><label for="countryFilter">国家</label><select id="countryFilter"></select></div>
       <div class="filter-card"><label for="storeFilter">店铺</label><select id="storeFilter"></select></div>
-      <div class="filter-card"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
-      <div class="filter-card"><label for="campaignFilter">广告活动名称</label><select id="campaignFilter"></select></div>
-      <div class="filter-card"><label for="groupFilter">广告组名称</label><select id="groupFilter"></select></div>
-      <div class="filter-card keyword-card"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
+      <div class="filter-card" id="portfolioCard"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
+      <div class="filter-card" id="campaignCard"><label for="campaignFilter">广告活动名称</label><select id="campaignFilter"></select></div>
+      <div class="filter-card" id="groupCard"><label for="groupFilter">广告组名称</label><select id="groupFilter"></select></div>
+      <div class="filter-card keyword-card" id="keywordCard"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
     </div>
     <div class="filter-status" id="filterStatus" aria-live="polite"></div>
-    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">确认筛选并下载选择文件</button><p id="selectionHelp">请选择筛选条件，然后下载选择文件并发回当前对话。不会在此阶段计算活动建议。</p><textarea id="selectionJson" aria-label="筛选选择文件内容，可手动复制" readonly hidden></textarea></div>
+    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">运行并生成看板</button><p id="selectionHelp">确认统计日期、站点、国家和店铺后，点击运行。</p></div>
   </section>
   <section class="panel detail-panel" id="detailPanel" aria-labelledby="detailTitle">
     <div class="detail-top">
@@ -105,7 +105,7 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
     <div class="charts" id="charts"></div>
     <div class="suggestions"><h2>当前关键词优化建议</h2><div class="reco-grid" id="recommendations"></div></div>
   </section>
-  <footer class="footer">跨境吴老师 · 领星 MCP 商品推广客户搜索词报告 · 日期窗口按生成时冻结</footer>
+  <footer class="footer" id="pageFooter">跨境吴老师 · 领星 MCP 商品推广客户搜索词报告 · 日期窗口按生成时冻结</footer>
 </main>
 <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"><strong id="tipTitle"></strong><div id="tipBody"></div></div>
 <script>
@@ -136,6 +136,15 @@ function renderFilters(){
   if(!dateWindows.some(item=>item.key===state.date))state.date=PAYLOAD.initialWindow;
   dateSelect.value=state.date;
   const windowDef=dateWindows.find(item=>item.key===state.date);
+  if(selectionMode){
+    const siteOpts=sites.map(s=>({value:s.code,label:s.code}));
+    state.site=setOptions(el("siteFilter"),siteOpts,state.site,"全部站点");
+    setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
+    const eligible=profiles.filter(p=>!state.site||p.site===state.site);
+    const storeOpts=eligible.map(p=>({value:p.key,label:profileLabel(p)}));
+    state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
+    return;
+  }
   const dateRows=rows.filter(r=>r.window===state.date);
   const siteOpts=sites.map(s=>({value:s.code,label:s.code}));
   state.site=setOptions(el("siteFilter"),siteOpts,state.site,"全部站点");
@@ -149,6 +158,10 @@ function renderFilters(){
   state.campaign=setOptions(el("campaignFilter"),unique(portfolioRows.map(r=>r.campaign).filter(v=>v!=="活动信息不完整")).map(v=>({value:v,label:v})),state.campaign,"全部广告活动");
   const campaignRows=portfolioRows.filter(r=>!state.campaign||r.campaign===state.campaign);
   state.group=setOptions(el("groupFilter"),unique(campaignRows.map(r=>r.group).filter(Boolean)).map(v=>({value:v,label:v})),state.group,"全部广告组");
+}
+function profileLabel(p){
+  const same=profiles.filter(x=>x.shop===p.shop&&x.site===p.site);
+  return p.shop+" · "+p.site+(same.length>1?"（选项 "+(same.indexOf(p)+1)+"）":"");
 }
 function filteredRows(){
   const windowDef=dateWindows.find(item=>item.key===state.date);
@@ -283,11 +296,17 @@ function renderRecommendations(groups){
 }
 function render(){
   hideTooltip();
+  if(selectionMode){
+    const windowDef=dateWindows.find(item=>item.key===state.date);
+    const count=profiles.filter(p=>!state.site||p.site===state.site).filter(p=>!state.store||p.key===state.store).length;
+    el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(count)+" 个授权店铺可选";
+    el("selectionHelp").textContent="确认统计日期、站点、国家和店铺后，点击运行。";
+    return;
+  }
   const source=filteredRows(),terms=aggregateTerms(source);
   const term=renderKeywordFilter(terms);
   const windowDef=dateWindows.find(item=>item.key===state.date);
   el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(terms.length)+" 个可选关键词"+(term?" · 当前第 "+fmtInt(terms.indexOf(term)+1)+" 位 · "+fmtInt(term.clicks)+" 次点击":"");
-  if(selectionMode){el("selectionJson").hidden=true;el("selectionHelp").textContent=term?"请选择筛选条件，然后下载选择文件并发回当前对话。不会在此阶段计算活动建议。":"当前筛选无客户搜索词，请调整条件。";el("confirmSelection").disabled=!term;return;}
   el("selectedTerm").textContent=term?.query||"—";
   const charts=el("charts");charts.replaceChildren();
   el("detailNote").textContent=term?"按店铺／站点分开展示原币花费；橙线为点击加权转化率。悬停或聚焦图形可查看具体数值。":"当前筛选没有可展示的客户搜索词。";
@@ -303,17 +322,29 @@ function render(){
   }
   renderRecommendations(groups);
 }
-function exportSelection(){
-  if(!selectionMode||!state.selected)return;
+async function exportSelection(){
+  if(!selectionMode)return;
   const country=state.site?(sites.find(s=>s.code===state.site)?.country||""):"";
-  const choice={version:1,datasetDigest:PAYLOAD.datasetDigest,filters:{date:state.date,site:state.site,country,store:state.store,portfolio:state.portfolio,campaign:state.campaign,group:state.group,keyword:state.selected}};
-  const data=JSON.stringify(choice,null,2);
-  const area=el("selectionJson");area.value=data;area.hidden=false;
-  el("selectionHelp").textContent="选择文件已准备好。请将下载的 JSON 发回当前对话；若下载受限，可复制下方内容发送。";
-  try{const blob=new Blob([data],{type:"application/json;charset=utf-8"});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="跨境吴老师_广告搜索词_筛选选择.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){el("selectionHelp").textContent="当前浏览器无法下载，请复制下方 JSON 发回当前对话。";}
+  const button=el("confirmSelection");button.disabled=true;
+  el("selectionHelp").textContent="正在提交筛选条件…";
+  try{
+    const response=await fetch("/run",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:state.date,site:state.site,country,store:state.store})});
+    const result=await response.json();
+    if(!response.ok)throw new Error(result.message||"提交失败");
+    for(;;){
+      el("selectionHelp").textContent="正在读取所选范围的领星报告并生成看板…";
+      await new Promise(resolve=>setTimeout(resolve,2000));
+      const statusResponse=await fetch("/status",{cache:"no-store"});
+      const status=await statusResponse.json();
+      if(status.state==="ready"){location.href="/final";return;}
+      if(status.state==="error")throw new Error(status.message||"生成失败");
+    }
+  }catch(error){el("selectionHelp").textContent="无法继续："+error.message;button.disabled=false;}
 }
 el("selectionActions").hidden=!selectionMode;
 el("detailPanel").hidden=selectionMode;
+for(const id of ["portfolioCard","campaignCard","groupCard","keywordCard"])el(id).hidden=selectionMode;
+if(selectionMode){el("dataBadge").textContent="授权店铺筛选";el("pageFooter").textContent="跨境吴老师 · 领星 MCP 广告授权店铺清单";}
 el("confirmSelection").addEventListener("click",exportSelection);
 el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
 el("siteFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
