@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>跨境吴老师AMAZON广告搜索词优化看板</title>
+<style>
+:root{--page:#3a147b;--panel:#9f78bf;--pink:#df5d9c;--text:#ffffff;--ink:#1a1230;--blue:#1595f9;--yellow:#f4fb20;--orange:#ff7a1a;--purple:#7a00a8;--gray:#766985;--line:rgba(255,255,255,.24)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--page)}
+body{font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif;color:var(--text);background:radial-gradient(circle at 10% 8%,rgba(255,120,220,.35),transparent 28%),linear-gradient(135deg,#40208b 0%,#801d8e 43%,#e22075 100%);line-height:1.45}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.dash{width:min(1360px,100%);margin:auto;padding:12px}
+.tile,.panel{min-width:0;border:1.5px solid #13071e;border-radius:13px;box-shadow:0 2px 0 rgba(0,0,0,.22)}
+.title-tile{min-height:104px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;background:linear-gradient(145deg,#5a247c,#782d8e)}
+h1{margin:0;font-size:clamp(23px,2.5vw,31px);font-weight:800;line-height:1.24;overflow-wrap:anywhere}
+.title-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;flex:none}
+.brand-logo{display:flex;align-items:center;width:153px;height:60px;padding:0;border-radius:8px;background:#fff;flex:none}
+.brand-logo img{display:block;width:100%;height:100%;object-fit:contain}
+.demo-badge{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:var(--yellow);color:var(--ink);font-size:12px;font-weight:900;white-space:nowrap}
+.action-button{border:1px solid #251035;border-radius:7px;background:#5f2385;color:#fff;padding:9px 12px;font-size:12px;font-weight:800;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.action-button:hover{background:#752a9e}
+.action-button:focus-visible,select:focus-visible,.chart-hit:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.panel{margin-top:14px;padding:14px;background:rgba(183,126,193,.88)}
+.panel.pink{background:rgba(220,96,158,.90)}
+.panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
+.filters{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.filter-card{min-width:0;display:grid;gap:6px;padding:10px;background:linear-gradient(145deg,rgba(183,126,193,.96),rgba(224,91,157,.94));border:1px solid #3f1a58;border-radius:9px}
+.filter-card label{font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
+.filter-card select{width:100%;min-width:0;min-height:39px;padding:8px 9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133}
+.filter-card select{overflow:hidden;text-overflow:ellipsis}
+.filter-card.keyword-card{grid-column:1/-1}
+.filter-status{margin-top:10px;color:#2a1050;font-size:12px;font-weight:800;text-align:right}
+.detail-panel{min-height:530px}
+.detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.selected-term{color:var(--yellow);overflow-wrap:anywhere}
+.legend{display:flex;flex-wrap:wrap;gap:8px 15px;font-size:12px;font-weight:800}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+.swatch.spend{background:var(--blue)}.swatch.cvr{background:var(--orange)}
+.detail-note{margin:8px 0 0;font-size:12px;color:#fff}
+.charts{display:grid;gap:12px;margin-top:12px}
+.chart-card{min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(83,39,139,.48)}
+.chart-card h3{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
+.chart-meta{margin:0 0 6px;font-size:12px;color:#fff}
+.chart-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-color:#ebc8f3 #4a246a}
+.chart-scroll svg{display:block;max-width:none}
+.chart-hit{cursor:help}
+.chart-text{fill:#fff;font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif}
+.suggestions{margin-top:14px}
+.suggestions h2{margin-bottom:10px}
+.reco-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.reco-card{min-width:0;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:10px 12px;background:rgba(83,39,139,.5)}
+.reco-card.good{border-left-color:#39d98a}.reco-card.test{border-left-color:var(--blue)}.reco-card.reduce{border-left-color:var(--orange)}.reco-card.check{border-left-color:var(--yellow)}
+.reco-card strong,.reco-card span{overflow-wrap:anywhere}
+.reco-card strong{display:block;font-size:13px}
+.reco-card p{margin:5px 0 0;font-size:12px}
+.reco-tag{display:inline-block;padding:2px 7px;margin-left:5px;border-radius:999px;background:rgba(255,255,255,.18);font-size:11px;vertical-align:middle}
+.empty{padding:28px 12px;text-align:center;font-weight:800}
+.footer{padding:16px 4px;text-align:center;font-size:12px;color:#fff}
+.tooltip{position:fixed;z-index:100;display:none;max-width:min(320px,calc(100vw - 20px));padding:10px 12px;border:1px solid var(--yellow);border-radius:8px;background:#261133;color:#fff;box-shadow:0 10px 24px rgba(25,4,40,.45);pointer-events:none;font-size:12px}
+.tooltip strong{display:block;margin-bottom:5px;color:var(--yellow);font-size:13px;overflow-wrap:anywhere}
+.tooltip div{overflow-wrap:anywhere}
+@media(max-width:1200px){.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:900px){.detail-panel{min-height:0}.reco-grid{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.dash{padding:8px}.title-tile{align-items:flex-start;flex-direction:column;padding:16px}.title-actions{justify-content:space-between;width:100%}.brand-logo{width:153px;height:60px}.filters{grid-template-columns:1fr}.panel{padding:12px}h1{font-size:24px}}
+</style>
+</head>
+<body>
+<main class="dash">
+  <header class="tile title-tile">
+    <h1>跨境吴老师AMAZON广告搜索词优化看板</h1>
+    <div class="title-actions">
+      <span class="demo-badge">领星真实数据</span>
+      <span class="brand-logo"><img src="data:image/jpeg;base64,__LOGO_BASE64__" alt="跨境吴老师 Logo"></span>
+    </div>
+  </header>
+  <section class="panel pink" aria-labelledby="filterTitle">
+    <div class="panel-head"><h2 id="filterTitle">筛选条件</h2><button class="action-button" id="resetFilters" type="button">重置筛选</button></div>
+    <div class="filters">
+      <div class="filter-card"><label for="dateFilter">统计日期</label><select id="dateFilter"></select></div>
+      <div class="filter-card"><label for="siteFilter">站点</label><select id="siteFilter"></select></div>
+      <div class="filter-card"><label for="countryFilter">国家</label><select id="countryFilter"></select></div>
+      <div class="filter-card"><label for="storeFilter">店铺</label><select id="storeFilter"></select></div>
+      <div class="filter-card"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
+      <div class="filter-card"><label for="campaignFilter">广告活动名称</label><select id="campaignFilter"></select></div>
+      <div class="filter-card"><label for="groupFilter">广告组名称</label><select id="groupFilter"></select></div>
+      <div class="filter-card keyword-card"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
+    </div>
+    <div class="filter-status" id="filterStatus" aria-live="polite"></div>
+  </section>
+  <section class="panel detail-panel" aria-labelledby="detailTitle">
+    <div class="detail-top">
+      <h2 id="detailTitle">当前关键词：<span class="selected-term" id="selectedTerm">—</span></h2>
+      <div class="legend" aria-label="图例"><span><i class="swatch spend"></i>花费</span><span><i class="swatch cvr"></i>点击加权转化率</span></div>
+    </div>
+    <p class="detail-note" id="detailNote"></p>
+    <div class="charts" id="charts"></div>
+    <div class="suggestions"><h2>当前关键词优化建议</h2><div class="reco-grid" id="recommendations"></div></div>
+  </section>
+  <footer class="footer">跨境吴老师 · 领星 MCP 商品推广客户搜索词报告 · 日期窗口按生成时冻结</footer>
+</main>
+<div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"><strong id="tipTitle"></strong><div id="tipBody"></div></div>
+<script>
+"use strict";
+const PAYLOAD=__DASHBOARD_PAYLOAD__;
+const sites=PAYLOAD.sites;
+const dateWindows=PAYLOAD.dateWindows;
+const profiles=PAYLOAD.profiles;
+const rows=PAYLOAD.rows;
+const state={date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""};
+const el=id=>document.getElementById(id);
+const fmtInt=n=>new Intl.NumberFormat("zh-CN").format(n);
+const fmtMoney=n=>n===null?"不完整":new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+const fmtRate=(n,clicks)=>n===null?(clicks===0?"不适用":"不完整"):n.toFixed(1)+"%";
+const unique=values=>[...new Set(values)].sort((a,b)=>String(a).localeCompare(String(b),"zh-CN"));
+function setOptions(select,items,value,allLabel="全部"){
+  select.replaceChildren();
+  select.add(new Option(allLabel,""));
+  for(const item of items)select.add(new Option(item.label,item.value));
+  select.value=items.some(item=>item.value===value)?value:"";
+  return select.value;
+}
+function renderFilters(){
+  const dateSelect=el("dateFilter");dateSelect.replaceChildren();
+  for(const item of dateWindows)dateSelect.add(new Option(item.key,item.key));
+  if(!dateWindows.some(item=>item.key===state.date))state.date=PAYLOAD.initialWindow;
+  dateSelect.value=state.date;
+  const windowDef=dateWindows.find(item=>item.key===state.date);
+  const dateRows=rows.filter(r=>r.window===state.date);
+  const siteOpts=sites.map(s=>({value:s.code,label:s.code}));
+  state.site=setOptions(el("siteFilter"),siteOpts,state.site,"全部站点");
+  setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
+  const siteRows=dateRows.filter(r=>!state.site||r.site===state.site);
+  const storeOpts=profiles.filter(p=>!state.site||p.site===state.site).map(p=>({value:p.key,label:p.shop+" · "+p.site}));
+  state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
+  const storeRows=siteRows.filter(r=>!state.store||r.profile===state.store);
+  state.portfolio=setOptions(el("portfolioFilter"),unique(storeRows.map(r=>r.portfolio)).map(v=>({value:v,label:v})),state.portfolio,"全部广告组合");
+  const portfolioRows=storeRows.filter(r=>!state.portfolio||r.portfolio===state.portfolio);
+  state.campaign=setOptions(el("campaignFilter"),unique(portfolioRows.map(r=>r.campaign).filter(v=>v!=="活动信息不完整")).map(v=>({value:v,label:v})),state.campaign,"全部广告活动");
+  const campaignRows=portfolioRows.filter(r=>!state.campaign||r.campaign===state.campaign);
+  state.group=setOptions(el("groupFilter"),unique(campaignRows.map(r=>r.group).filter(Boolean)).map(v=>({value:v,label:v})),state.group,"全部广告组");
+}
+function filteredRows(){
+  const windowDef=dateWindows.find(item=>item.key===state.date);
+  return rows.filter(r=>r.window===state.date&&(!state.site||r.site===state.site)&&(!state.store||r.profile===state.store)&&(!state.portfolio||r.portfolio===state.portfolio)&&(!state.campaign||r.campaign===state.campaign)&&(!state.group||r.group===state.group));
+}
+function aggregateTerms(source){
+  const map=new Map();
+  for(const r of source){
+    const key=r.query.trim().toLocaleLowerCase("en");
+    if(!map.has(key))map.set(key,{key,query:r.query,clicks:0,weighted:0});
+    const item=map.get(key);
+    item.clicks+=r.clicks;if(r.clicks>0&&r.cvr===null)item.incomplete=true;else if(r.cvr!==null)item.weighted+=r.clicks*r.cvr;
+  }
+  return [...map.values()].map(x=>({...x,cvr:x.clicks&&!x.incomplete?x.weighted/x.clicks:null}))
+    .sort((a,b)=>b.clicks-a.clicks||a.key.localeCompare(b.key,"en"));
+}
+function textNode(tag,cls,value){
+  const node=document.createElement(tag);if(cls)node.className=cls;node.textContent=value;return node;
+}
+function renderKeywordFilter(terms){
+  const select=el("keywordFilter");select.replaceChildren();
+  if(!terms.length){
+    state.selected="";select.add(new Option("当前筛选没有客户搜索词",""));select.value="";select.disabled=true;
+    return null;
+  }
+  select.disabled=false;
+  if(!terms.some(term=>term.key===state.selected))state.selected=terms[0].key;
+  terms.forEach((term,index)=>select.add(new Option("#"+(index+1)+" · "+term.query+" · "+fmtInt(term.clicks)+" 点击",term.key)));
+  select.value=state.selected;
+  return terms.find(term=>term.key===state.selected);
+}
+const svgNS="http://www.w3.org/2000/svg";
+function svg(tag,attrs={},content){
+  const node=document.createElementNS(svgNS,tag);
+  for(const [key,value] of Object.entries(attrs))node.setAttribute(key,String(value));
+  if(content!==undefined)node.textContent=content;
+  return node;
+}
+function campaignAgg(source){
+  const map=new Map();
+  for(const r of source){
+    if(!map.has(r.campaignKey))map.set(r.campaignKey,{key:r.campaignKey,name:r.campaign,portfolio:r.portfolio,clicks:0,spends:0,weighted:0,groups:new Set(),badSpend:false,badCvr:false,incompleteIdentity:r.incompleteIdentity});
+    const x=map.get(r.campaignKey);x.clicks+=r.clicks;if(r.spends===null)x.badSpend=true;else x.spends+=r.spends;if(r.clicks>0&&r.cvr===null)x.badCvr=true;else if(r.cvr!==null)x.weighted+=r.clicks*r.cvr;x.groups.add(r.group);
+  }
+  return [...map.values()].map(x=>({...x,spends:x.badSpend?null:x.spends,cvr:x.clicks&&!x.badCvr?x.weighted/x.clicks:null}))
+    .sort((a,b)=>b.clicks-a.clicks||a.name.localeCompare(b.name,"zh-CN"));
+}
+const tooltip=el("tooltip");
+function hideTooltip(){tooltip.style.display="none";tooltip.setAttribute("aria-hidden","true");}
+function showTooltip(info,event,node){
+  el("tipTitle").textContent=info.name;
+  el("tipBody").textContent=info.shop+" · "+info.site+"｜"+info.portfolio+"｜"+fmtInt(info.clicks)+" 点击｜"+info.currency+" "+fmtMoney(info.spends)+" 花费｜"+fmtRate(info.cvr,info.clicks)+" 点击加权转化率";
+  tooltip.style.display="block";tooltip.setAttribute("aria-hidden","false");
+  const rect=node.getBoundingClientRect();
+  const anchorX=event&&Number.isFinite(event.clientX)?event.clientX:rect.left+rect.width/2;
+  const anchorY=event&&Number.isFinite(event.clientY)?event.clientY:rect.top;
+  const box=tooltip.getBoundingClientRect();
+  tooltip.style.left=Math.max(8,Math.min(anchorX+14,window.innerWidth-box.width-8))+"px";
+  tooltip.style.top=Math.max(8,Math.min(anchorY+14,window.innerHeight-box.height-8))+"px";
+}
+function bindTip(node,info){
+  node.classList.add("chart-hit");node.setAttribute("tabindex","0");
+  node.setAttribute("role","img");
+  node.setAttribute("aria-label",info.shop+" "+info.site+" "+info.portfolio+" "+info.name+"，点击 "+info.clicks+"，花费 "+info.currency+" "+fmtMoney(info.spends)+"，点击加权转化率 "+fmtRate(info.cvr,info.clicks));
+  node.addEventListener("mouseenter",event=>showTooltip(info,event,node));
+  node.addEventListener("mousemove",event=>showTooltip(info,event,node));
+  node.addEventListener("mouseleave",hideTooltip);
+  node.addEventListener("focus",()=>showTooltip(info,null,node));
+  node.addEventListener("blur",hideTooltip);
+}
+function drawChart(profile,items){
+  const card=textNode("article","chart-card","");
+  card.append(textNode("h3","",profile.shop+" · "+profile.site+" / "+profile.country));
+  card.append(textNode("p","chart-meta",fmtInt(items.reduce((a,x)=>a+x.clicks,0))+" 点击 · 花费单位 "+profile.currency+" · "+items.length+" 个广告活动"));
+  const scroll=textNode("div","chart-scroll","");
+  const width=Math.max(690,items.length*150+110),height=340;
+  const chart=svg("svg",{viewBox:"0 0 "+width+" "+height,width,height,"aria-label":profile.shop+" "+profile.site+" 花费与转化率图"});
+  const left=62,right=width-65,top=25,bottom=247,plotH=bottom-top,plotW=right-left;
+  const maxSpend=Math.max(10,...items.map(x=>x.spends||0))*1.2;
+  const maxRate=Math.max(10,...items.map(x=>x.cvr||0))*1.2;
+  for(let i=0;i<=4;i++){
+    const y=top+plotH*i/4;
+    chart.append(svg("line",{x1:left,y1:y,x2:right,y2:y,stroke:"rgba(255,255,255,.24)","stroke-dasharray":i===4?"0":"4 5"}));
+    chart.append(svg("text",{x:left-8,y:y+4,"text-anchor":"end",class:"chart-text","font-size":11},fmtMoney(maxSpend*(4-i)/4)));
+    chart.append(svg("text",{x:right+8,y:y+4,class:"chart-text","font-size":11},((maxRate*(4-i)/4).toFixed(0))+"%"));
+  }
+  chart.append(svg("text",{x:6,y:13,class:"chart-text","font-size":11},profile.currency+" 花费"));
+  chart.append(svg("text",{x:right+3,y:13,class:"chart-text","font-size":11},"CVR"));
+  const points=[];
+  items.forEach((item,i)=>{
+    const cx=left+plotW*(i+0.5)/items.length;
+    const barH=plotH*(item.spends||0)/maxSpend,barY=bottom-barH;
+    const info={...item,shop:profile.shop,site:profile.site,currency:profile.currency};
+    const bar=svg("rect",{x:cx-29,y:barY,width:58,height:barH,rx:5,fill:"#1595f9"});
+    if(item.spends!==null){bindTip(bar,info);chart.append(bar);}
+    const cy=bottom-plotH*(item.cvr||0)/maxRate;
+    if(item.cvr!==null)points.push([cx,cy,info]);
+    const label=item.name.length>11?item.name.slice(0,10)+"…":item.name;
+    chart.append(svg("text",{x:cx,y:bottom+22,transform:"rotate(-18 "+cx+" "+(bottom+22)+")","text-anchor":"middle",class:"chart-text","font-size":12},label));
+    chart.append(svg("text",{x:cx,y:bottom+74,"text-anchor":"middle",class:"chart-text","font-size":11},fmtInt(item.clicks)+" 点击"));
+  });
+  if(points.length>1&&items.every(x=>x.cvr!==null)){
+    chart.append(svg("polyline",{points:points.map(p=>p[0]+","+p[1]).join(" "),fill:"none",stroke:"#ff7a1a","stroke-width":3,"stroke-linecap":"round","stroke-linejoin":"round"}));
+  }
+  for(const [cx,cy,info] of points){
+    chart.append(svg("circle",{cx,cy,r:6,fill:"#ff7a1a",stroke:"#fff","stroke-width":2,"pointer-events":"none"}));
+    const hit=svg("circle",{cx,cy,r:18,fill:"transparent",stroke:"none","pointer-events":"all"});
+    bindTip(hit,info);chart.append(hit);
+  }
+  scroll.append(chart);scroll.addEventListener("scroll",hideTooltip,{passive:true});card.append(scroll);
+  return card;
+}
+function renderRecommendations(groups){
+  const container=el("recommendations");container.replaceChildren();
+  if(!groups.length){container.append(textNode("div","empty","当前筛选没有可比较的活动"));return;}
+  for(const {profile,items} of groups){
+    const eligible=items.filter(x=>x.clicks>=20&&x.spends!==null&&x.cvr!==null&&x.cvr>0&&!x.incompleteIdentity).sort((a,b)=>b.cvr-a.cvr);
+    const winner=eligible.length>=2&&eligible[0].cvr>eligible[1].cvr?eligible[0].key:null;
+    for(const item of items){
+      let kind="test",status="保留测试",reason="样本或对照不足，继续观察。";
+      if(item.clicks===0){kind="check";status="样本不足";reason="该活动当前筛选范围内没有点击。";}
+      else if(item.cvr===null||item.spends===null||item.incompleteIdentity){kind="check";status="数据待核对";reason="活动身份或花费／转化率不完整，暂不提供操作建议。";}
+      else if(item.cvr===0&&item.clicks>=20){kind="check";status="数据待核对";reason="零转化且达到 20 点击；归因成熟度未核实，暂不执行暂停／否定。";}
+      else if(winner===item.key){kind="good";status="主推并倾斜候选";reason="同店铺同词的合格活动中转化率最高；须人工复核。";}
+      else if(winner&&item.clicks>=20){kind="reduce";status="降低出价／限流候选";reason="同店铺同词有转化率更高的合格活动；须人工复核。";}
+      const card=textNode("article","reco-card "+kind,"");
+      const title=textNode("strong","",profile.shop+" · "+profile.site+"｜"+item.portfolio+" / "+item.name);
+      title.append(textNode("span","reco-tag",status));
+      card.append(title,textNode("p","",fmtInt(item.clicks)+" 点击 · "+profile.currency+" "+fmtMoney(item.spends)+" 花费 · "+fmtRate(item.cvr,item.clicks)+" 转化率。"+reason));
+      container.append(card);
+    }
+  }
+}
+function render(){
+  hideTooltip();
+  const source=filteredRows(),terms=aggregateTerms(source);
+  const term=renderKeywordFilter(terms);
+  const windowDef=dateWindows.find(item=>item.key===state.date);
+  el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(terms.length)+" 个可选关键词"+(term?" · 当前第 "+fmtInt(terms.indexOf(term)+1)+" 位 · "+fmtInt(term.clicks)+" 次点击":"");
+  el("selectedTerm").textContent=term?.query||"—";
+  const charts=el("charts");charts.replaceChildren();
+  el("detailNote").textContent=term?"按店铺／站点分开展示原币花费；橙线为点击加权转化率。悬停或聚焦图形可查看具体数值。":"当前筛选没有可展示的客户搜索词。";
+  if(!term){charts.append(textNode("div","empty","请选择其他筛选条件"));renderRecommendations([]);return;}
+  const termRows=source.filter(r=>r.query.trim().toLocaleLowerCase("en")===term.key);
+  const groups=[];
+  for(const profile of profiles){
+    const subset=termRows.filter(r=>r.profile===profile.key);
+    if(!subset.length)continue;
+    const items=campaignAgg(subset);
+    groups.push({profile,items});
+    charts.append(drawChart(profile,items));
+  }
+  renderRecommendations(groups);
+}
+el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
+el("siteFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
+el("countryFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
+el("storeFilter").addEventListener("change",event=>{state.store=event.target.value;state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
+el("portfolioFilter").addEventListener("change",event=>{state.portfolio=event.target.value;state.campaign="";state.group="";renderFilters();render();});
+el("campaignFilter").addEventListener("change",event=>{state.campaign=event.target.value;state.group="";renderFilters();render();});
+el("groupFilter").addEventListener("change",event=>{state.group=event.target.value;renderFilters();render();});
+el("keywordFilter").addEventListener("change",event=>{state.selected=event.target.value;render();});
+el("resetFilters").addEventListener("click",()=>{Object.assign(state,{date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""});renderFilters();render();});
+window.addEventListener("scroll",hideTooltip,{passive:true});
+window.addEventListener("resize",hideTooltip,{passive:true});
+renderFilters();render();
+</script>
+</body>
+</html>
