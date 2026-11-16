@@ -18,7 +18,6 @@ h1{margin:0;font-size:clamp(23px,2.5vw,31px);font-weight:800;line-height:1.24;ov
 .title-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px;flex:none}
 .brand-logo{display:flex;align-items:center;width:153px;height:60px;padding:0;border-radius:8px;background:#fff;flex:none}
 .brand-logo img{display:block;width:100%;height:100%;object-fit:contain}
-.demo-badge{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:var(--yellow);color:var(--ink);font-size:12px;font-weight:900;white-space:nowrap}
 .action-button{border:1px solid #251035;border-radius:7px;background:#5f2385;color:#fff;padding:9px 12px;font-size:12px;font-weight:800;box-shadow:0 1px 0 rgba(0,0,0,.25)}
 .action-button:hover{background:#752a9e}
 .action-button:focus-visible,select:focus-visible,.chart-hit:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
@@ -78,7 +77,6 @@ body.selection-mode .filters{grid-template-columns:repeat(4,minmax(0,1fr))}
   <header class="tile title-tile">
     <h1>跨境吴老师AMAZON广告搜索词优化看板</h1>
     <div class="title-actions">
-      <span class="demo-badge" id="dataBadge">领星真实数据</span>
       <span class="brand-logo"><img src="data:image/jpeg;base64,__LOGO_BASE64__" alt="跨境吴老师 Logo"></span>
     </div>
   </header>
@@ -346,7 +344,7 @@ async function exportSelection(){
 el("selectionActions").hidden=!selectionMode;
 el("detailPanel").hidden=selectionMode;
 for(const id of ["portfolioCard","campaignCard","groupCard","keywordCard"])el(id).hidden=selectionMode;
-if(selectionMode){el("dataBadge").textContent="授权店铺筛选";el("pageFooter").textContent="跨境吴老师 · 领星 MCP 广告授权店铺清单";}
+if(selectionMode){el("pageFooter").textContent="跨境吴老师 · 领星 MCP 广告授权店铺清单";}
 el("confirmSelection").addEventListener("click",exportSelection);
 el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
 el("siteFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});

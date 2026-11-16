@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "4e127516ad2c9577691d29ebf89294ccaac943ccdc0ade1872c9bde4cf270fd4"
+TEMPLATE_SHA256 = "6c6cbacea7e46b29d7d12abefb6e3e846c603f3b6e997a176cf7266d66060089"
 
 
 class InputError(ValueError):
