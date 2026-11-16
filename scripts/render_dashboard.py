@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "6c6cbacea7e46b29d7d12abefb6e3e846c603f3b6e997a176cf7266d66060089"
+TEMPLATE_SHA256 = "e07890618e9f51d1013ddbc26d29314d2822e5d1dea0acd9978b90de4ba5b4cf"
 
 
 class InputError(ValueError):
@@ -128,6 +128,8 @@ def normalize(raw: dict, phase: str) -> dict:
         profile_by_ref[ref] = display
 
     sites = [{"code": code, "country": pair[0], "currency": pair[1]} for code, pair in sorted(site_by_code.items())]
+    if len({site["country"] for site in sites}) != len(sites):
+        raise InputError("国家名称与站点代码无法唯一对应，不能只用国家筛选")
     if phase == "selection":
         if "rows" in raw or "coverage" in raw:
             raise InputError("信息收集页只接受授权店铺清单，不得提前嵌入报告")

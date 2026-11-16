@@ -25,8 +25,8 @@ h1{margin:0;font-size:clamp(23px,2.5vw,31px);font-weight:800;line-height:1.24;ov
 .panel.pink{background:rgba(220,96,158,.90)}
 .panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
-.filters{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
-body.selection-mode .filters{grid-template-columns:repeat(4,minmax(0,1fr))}
+.filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+body.selection-mode .filters{grid-template-columns:repeat(3,minmax(0,1fr))}
 .filter-card{min-width:0;display:grid;gap:6px;padding:10px;background:linear-gradient(145deg,rgba(183,126,193,.96),rgba(224,91,157,.94));border:1px solid #3f1a58;border-radius:9px}
 .filter-card label{font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
 .filter-card select{width:100%;min-width:0;min-height:39px;padding:8px 9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133}
@@ -84,7 +84,6 @@ body.selection-mode .filters{grid-template-columns:repeat(4,minmax(0,1fr))}
     <div class="panel-head"><h2 id="filterTitle">筛选条件</h2><button class="action-button" id="resetFilters" type="button">重置筛选</button></div>
     <div class="filters">
       <div class="filter-card"><label for="dateFilter">统计日期</label><select id="dateFilter"></select></div>
-      <div class="filter-card"><label for="siteFilter">站点</label><select id="siteFilter"></select></div>
       <div class="filter-card"><label for="countryFilter">国家</label><select id="countryFilter"></select></div>
       <div class="filter-card"><label for="storeFilter">店铺</label><select id="storeFilter"></select></div>
       <div class="filter-card" id="portfolioCard"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
@@ -93,7 +92,7 @@ body.selection-mode .filters{grid-template-columns:repeat(4,minmax(0,1fr))}
       <div class="filter-card keyword-card" id="keywordCard"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
     </div>
     <div class="filter-status" id="filterStatus" aria-live="polite"></div>
-    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">运行并生成看板</button><p id="selectionHelp">确认统计日期、站点、国家和店铺后，点击运行。</p></div>
+    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">运行并生成看板</button><p id="selectionHelp">确认统计日期、国家和店铺后，点击运行。</p></div>
   </section>
   <section class="panel detail-panel" id="detailPanel" aria-labelledby="detailTitle">
     <div class="detail-top">
@@ -137,18 +136,14 @@ function renderFilters(){
   dateSelect.value=state.date;
   const windowDef=dateWindows.find(item=>item.key===state.date);
   if(selectionMode){
-    const siteOpts=sites.map(s=>({value:s.code,label:s.code}));
-    state.site=setOptions(el("siteFilter"),siteOpts,state.site,"全部站点");
-    setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
+    state.site=setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
     const eligible=profiles.filter(p=>!state.site||p.site===state.site);
     const storeOpts=eligible.map(p=>({value:p.key,label:profileLabel(p)}));
     state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
     return;
   }
   const dateRows=rows.filter(r=>r.window===state.date);
-  const siteOpts=sites.map(s=>({value:s.code,label:s.code}));
-  state.site=setOptions(el("siteFilter"),siteOpts,state.site,"全部站点");
-  setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
+  state.site=setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
   const siteRows=dateRows.filter(r=>!state.site||r.site===state.site);
   const storeOpts=profiles.filter(p=>!state.site||p.site===state.site).map(p=>({value:p.key,label:p.shop+" · "+p.site}));
   state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
@@ -236,7 +231,7 @@ function drawChart(profile,items){
   card.append(textNode("h3","",profile.shop+" · "+profile.site+" / "+profile.country));
   card.append(textNode("p","chart-meta",fmtInt(items.reduce((a,x)=>a+x.clicks,0))+" 点击 · 花费单位 "+profile.currency+" · "+items.length+" 个广告活动"));
   const scroll=textNode("div","chart-scroll","");
-  const width=Math.max(690,items.length*150+110),height=340;
+  const width=Math.max(690,items.length*150+110,el("detailPanel").clientWidth-54),height=340;
   const chart=svg("svg",{viewBox:"0 0 "+width+" "+height,width,height,"aria-label":profile.shop+" "+profile.site+" 花费与转化率图"});
   const left=62,right=width-65,top=25,bottom=247,plotH=bottom-top,plotW=right-left;
   const maxSpend=Math.max(10,...items.map(x=>x.spends||0))*1.2;
@@ -300,7 +295,7 @@ function render(){
     const windowDef=dateWindows.find(item=>item.key===state.date);
     const count=profiles.filter(p=>!state.site||p.site===state.site).filter(p=>!state.store||p.key===state.store).length;
     el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(count)+" 个授权店铺可选";
-    el("selectionHelp").textContent="确认统计日期、站点、国家和店铺后，点击运行。";
+    el("selectionHelp").textContent="确认统计日期、国家和店铺后，点击运行。";
     return;
   }
   const source=filteredRows(),terms=aggregateTerms(source);
@@ -347,7 +342,6 @@ for(const id of ["portfolioCard","campaignCard","groupCard","keywordCard"])el(id
 if(selectionMode){el("pageFooter").textContent="跨境吴老师 · 领星 MCP 广告授权店铺清单";}
 el("confirmSelection").addEventListener("click",exportSelection);
 el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
-el("siteFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
 el("countryFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
 el("storeFilter").addEventListener("change",event=>{state.store=event.target.value;state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
 el("portfolioFilter").addEventListener("change",event=>{state.portfolio=event.target.value;state.campaign="";state.group="";renderFilters();render();});
@@ -356,7 +350,7 @@ el("groupFilter").addEventListener("change",event=>{state.group=event.target.val
 el("keywordFilter").addEventListener("change",event=>{state.selected=event.target.value;render();});
 el("resetFilters").addEventListener("click",()=>{Object.assign(state,{date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""});renderFilters();render();});
 window.addEventListener("scroll",hideTooltip,{passive:true});
-window.addEventListener("resize",hideTooltip,{passive:true});
+window.addEventListener("resize",()=>{hideTooltip();if(!selectionMode)render();},{passive:true});
 renderFilters();render();
 </script>
 </body>

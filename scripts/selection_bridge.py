@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local, one-run browser bridge for the four pre-report filters.
+"""Local, one-run browser bridge for three pre-report filters plus derived site code.
 
 The bridge never calls LingXing or receives its credentials. The running Agent
 reads the validated choice file, calls its own authorized MCP tools, and writes
@@ -31,7 +31,7 @@ def outside_package(path: Path) -> Path:
 def validate_choice(raw: object, payload: dict) -> dict:
     choice = require_dict(raw, "筛选条件")
     if set(choice) != {"date", "site", "country", "store"}:
-        raise InputError("筛选条件必须恰好包含日期、站点、国家、店铺")
+        raise InputError("筛选提交必须包含日期、国家、店铺及内部站点代码")
     if any(not isinstance(value, str) for value in choice.values()):
         raise InputError("筛选条件类型无效")
     if choice["date"] not in {w["key"] for w in payload["dateWindows"]}:
