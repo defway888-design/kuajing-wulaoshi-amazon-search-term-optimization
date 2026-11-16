@@ -33,6 +33,10 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
 .filter-card select{overflow:hidden;text-overflow:ellipsis}
 .filter-card.keyword-card{grid-column:1/-1}
 .filter-status{margin-top:10px;color:#2a1050;font-size:12px;font-weight:800;text-align:right}
+[hidden]{display:none!important}
+.selection-actions{display:grid;gap:9px;margin-top:12px;justify-items:start}
+.selection-actions p{margin:0;font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
+.selection-actions textarea{width:100%;min-height:110px;padding:9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133;resize:vertical}
 .detail-panel{min-height:530px}
 .detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .selected-term{color:var(--yellow);overflow-wrap:anywhere}
@@ -90,8 +94,9 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
       <div class="filter-card keyword-card"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
     </div>
     <div class="filter-status" id="filterStatus" aria-live="polite"></div>
+    <div class="selection-actions" id="selectionActions" hidden><button class="action-button" id="confirmSelection" type="button">确认筛选并下载选择文件</button><p id="selectionHelp">请选择筛选条件，然后下载选择文件并发回当前对话。不会在此阶段计算活动建议。</p><textarea id="selectionJson" aria-label="筛选选择文件内容，可手动复制" readonly hidden></textarea></div>
   </section>
-  <section class="panel detail-panel" aria-labelledby="detailTitle">
+  <section class="panel detail-panel" id="detailPanel" aria-labelledby="detailTitle">
     <div class="detail-top">
       <h2 id="detailTitle">当前关键词：<span class="selected-term" id="selectedTerm">—</span></h2>
       <div class="legend" aria-label="图例"><span><i class="swatch spend"></i>花费</span><span><i class="swatch cvr"></i>点击加权转化率</span></div>
@@ -110,7 +115,9 @@ const sites=PAYLOAD.sites;
 const dateWindows=PAYLOAD.dateWindows;
 const profiles=PAYLOAD.profiles;
 const rows=PAYLOAD.rows;
-const state={date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""};
+const selectionMode=PAYLOAD.phase==="selection";
+const initial=PAYLOAD.initialSelection||{};
+const state={date:initial.date||PAYLOAD.initialWindow,site:initial.site||"",store:initial.store||"",portfolio:initial.portfolio||"",campaign:initial.campaign||"",group:initial.group||"",selected:initial.keyword||""};
 const el=id=>document.getElementById(id);
 const fmtInt=n=>new Intl.NumberFormat("zh-CN").format(n);
 const fmtMoney=n=>n===null?"不完整":new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
@@ -151,12 +158,11 @@ function aggregateTerms(source){
   const map=new Map();
   for(const r of source){
     const key=r.query.trim().toLocaleLowerCase("en");
-    if(!map.has(key))map.set(key,{key,query:r.query,clicks:0,weighted:0});
+    if(!map.has(key))map.set(key,{key,query:r.query,clicks:0});
     const item=map.get(key);
-    item.clicks+=r.clicks;if(r.clicks>0&&r.cvr===null)item.incomplete=true;else if(r.cvr!==null)item.weighted+=r.clicks*r.cvr;
+    item.clicks+=r.clicks;
   }
-  return [...map.values()].map(x=>({...x,cvr:x.clicks&&!x.incomplete?x.weighted/x.clicks:null}))
-    .sort((a,b)=>b.clicks-a.clicks||a.key.localeCompare(b.key,"en"));
+  return [...map.values()].sort((a,b)=>b.clicks-a.clicks||a.key.localeCompare(b.key,"en"));
 }
 function textNode(tag,cls,value){
   const node=document.createElement(tag);if(cls)node.className=cls;node.textContent=value;return node;
@@ -281,6 +287,7 @@ function render(){
   const term=renderKeywordFilter(terms);
   const windowDef=dateWindows.find(item=>item.key===state.date);
   el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(terms.length)+" 个可选关键词"+(term?" · 当前第 "+fmtInt(terms.indexOf(term)+1)+" 位 · "+fmtInt(term.clicks)+" 次点击":"");
+  if(selectionMode){el("selectionJson").hidden=true;el("selectionHelp").textContent=term?"请选择筛选条件，然后下载选择文件并发回当前对话。不会在此阶段计算活动建议。":"当前筛选无客户搜索词，请调整条件。";el("confirmSelection").disabled=!term;return;}
   el("selectedTerm").textContent=term?.query||"—";
   const charts=el("charts");charts.replaceChildren();
   el("detailNote").textContent=term?"按店铺／站点分开展示原币花费；橙线为点击加权转化率。悬停或聚焦图形可查看具体数值。":"当前筛选没有可展示的客户搜索词。";
@@ -296,6 +303,18 @@ function render(){
   }
   renderRecommendations(groups);
 }
+function exportSelection(){
+  if(!selectionMode||!state.selected)return;
+  const country=state.site?(sites.find(s=>s.code===state.site)?.country||""):"";
+  const choice={version:1,datasetDigest:PAYLOAD.datasetDigest,filters:{date:state.date,site:state.site,country,store:state.store,portfolio:state.portfolio,campaign:state.campaign,group:state.group,keyword:state.selected}};
+  const data=JSON.stringify(choice,null,2);
+  const area=el("selectionJson");area.value=data;area.hidden=false;
+  el("selectionHelp").textContent="选择文件已准备好。请将下载的 JSON 发回当前对话；若下载受限，可复制下方内容发送。";
+  try{const blob=new Blob([data],{type:"application/json;charset=utf-8"});const url=URL.createObjectURL(blob);const link=document.createElement("a");link.href=url;link.download="跨境吴老师_广告搜索词_筛选选择.json";document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){el("selectionHelp").textContent="当前浏览器无法下载，请复制下方 JSON 发回当前对话。";}
+}
+el("selectionActions").hidden=!selectionMode;
+el("detailPanel").hidden=selectionMode;
+el("confirmSelection").addEventListener("click",exportSelection);
 el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
 el("siteFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
 el("countryFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});

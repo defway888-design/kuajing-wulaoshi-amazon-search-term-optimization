@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Render the fixed Wu Lao Shi search-term dashboard from verified JSON.
+"""Render both stages of the fixed Wu Lao Shi search-term dashboard.
 
-Only the payload and bundled logo are injected into the canonical HTML shell.
+Only verified payloads and the bundled logo are injected into one HTML shell.
 Python standard library only; no MCP calls or operating-system-specific paths.
 """
 
@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "164497abac6b68e7ac121e1a118e85be404d005b4d942fdbc123d2d3e9f66763"
+TEMPLATE_SHA256 = "575cfb7e9d6971281a0283abde0acbbbb9d9f87c65f7b3a3581496c2c37b604b"
 
 
 class InputError(ValueError):
@@ -218,8 +218,59 @@ def normalize(raw: dict) -> dict:
             "initialWindow": initial, "timezone": timezone}
 
 
-def render(raw: dict) -> bytes:
+def dataset_digest(payload: dict) -> str:
+    canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def selected_filters(raw: dict, payload: dict, digest: str) -> dict:
+    choice = require_dict(raw, "筛选选择")
+    if type(choice.get("version")) is not int or choice["version"] != 1 or choice.get("datasetDigest") != digest:
+        raise InputError("筛选选择与本次报告不匹配，请重新使用本次筛选页")
+    filters = require_dict(choice.get("filters"), "filters")
+    required = {"date", "site", "country", "store", "portfolio", "campaign", "group", "keyword"}
+    if set(filters) != required or any(not isinstance(filters[key], str) for key in required):
+        raise InputError("筛选选择的八项字段不完整")
+    if filters["date"] not in WINDOWS or not filters["keyword"]:
+        raise InputError("筛选日期或客户搜索词无效")
+    sites = {item["code"]: item["country"] for item in payload["sites"]}
+    if filters["site"] and filters["site"] not in sites:
+        raise InputError("筛选站点无效")
+    country = sites.get(filters["site"], "")
+    if filters["country"] != country:
+        raise InputError("站点与国家筛选不一致")
+    profile_keys = {item["key"] for item in payload["profiles"]}
+    if filters["store"] and filters["store"] not in profile_keys:
+        raise InputError("筛选店铺无效")
+    matching = [row for row in payload["rows"] if
+                row["window"] == filters["date"] and
+                (not filters["site"] or row["site"] == filters["site"]) and
+                (not filters["store"] or row["profile"] == filters["store"]) and
+                (not filters["portfolio"] or row["portfolio"] == filters["portfolio"]) and
+                (not filters["campaign"] or row["campaign"] == filters["campaign"]) and
+                (not filters["group"] or row["group"] == filters["group"]) and
+                row["query"].strip().lower() == filters["keyword"].lower()]
+    if not matching:
+        raise InputError("筛选组合无有效搜索词明细")
+    return filters
+
+
+def render(raw: dict, phase: str, selection: Optional[dict] = None) -> bytes:
     payload = normalize(raw)
+    digest = dataset_digest(payload)
+    if phase == "selection":
+        if selection is not None:
+            raise InputError("筛选阶段不得加载已选条件")
+        payload["rows"] = [{key: row[key] for key in ("window", "query", "profile", "site", "country", "shop", "portfolio", "campaign", "group", "clicks")}
+                           for row in payload["rows"]]
+    elif phase == "final":
+        if selection is None:
+            raise InputError("最终看板必须先取得筛选页导出的选择文件")
+        payload["initialSelection"] = selected_filters(selection, payload, digest)
+    else:
+        raise InputError("phase 只能是 selection 或 final")
+    payload["phase"] = phase
+    payload["datasetDigest"] = digest
     template_bytes = TEMPLATE.read_bytes()
     digest = hashlib.sha256(template_bytes).hexdigest()
     if digest != TEMPLATE_SHA256:
@@ -241,18 +292,34 @@ def render(raw: dict) -> bytes:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path, help="经领星 MCP 验证的规范化 JSON")
+    parser.add_argument("--phase", required=True, choices=("selection", "final"), help="先筛选，后生成最终看板")
+    parser.add_argument("--selection", type=Path, help="筛选页导出的选择 JSON；final 阶段必填")
     parser.add_argument("--output", required=True, type=Path, help="单文件离线 HTML，必须在 Skill 包外")
     parser.add_argument("--check", action="store_true", help="只比较既有 HTML 与标准渲染结果")
     args = parser.parse_args()
     try:
         source = args.input.resolve()
         output = args.output.resolve()
+        if source == output:
+            raise InputError("HTML 输出不能覆盖本次报告输入 JSON")
+        if args.phase == "selection" and args.selection is not None:
+            raise InputError("筛选阶段不接受选择文件")
+        if args.phase == "final" and args.selection is None:
+            raise InputError("最终看板缺少筛选选择文件")
         if ROOT == source or ROOT in source.parents:
             raise InputError("含源身份的输入 JSON 不得写入公开 Skill 包")
         if ROOT == output or ROOT in output.parents:
             raise InputError("真实看板输出不得写入公开 Skill 包")
+        selected = None
+        if args.selection is not None:
+            selection_path = args.selection.resolve()
+            if selection_path == output or selection_path == source:
+                raise InputError("选择文件、报告缓存和 HTML 输出必须使用不同文件")
+            if ROOT == selection_path or ROOT in selection_path.parents:
+                raise InputError("筛选选择文件不得写入公开 Skill 包")
+            selected = require_dict(json.loads(selection_path.read_text(encoding="utf-8")), "筛选选择")
         raw = require_dict(json.loads(source.read_text(encoding="utf-8")), "输入 JSON")
-        generated = render(raw)
+        generated = render(raw, args.phase, selected)
         if args.check:
             if output.read_bytes() != generated:
                 raise InputError("既有 HTML 与标准模板渲染结果不一致")

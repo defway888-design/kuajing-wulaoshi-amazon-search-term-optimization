@@ -1,6 +1,6 @@
 # 固定模板渲染输入契约
 
-领星 MCP 查询、字段核验、分页和广告组合关联按 [数据契约](data_contract.md) 完成后，再将本次结果规范化为 UTF-8 JSON。该 JSON 放在 Skill 包外、当前执行者有权写入的目录；其中允许暂存本次源 ID 供渲染器校验和重新映射，不能上传到公开仓库。渲染器不连接 MCP，也不补齐缺失业务数据。
+领星 MCP 查询、字段核验、分页和广告组合关联按 [数据契约](data_contract.md) 完成后，再将本次结果规范化为 UTF-8 JSON。该 JSON 放在 Skill 包外、当前执行者有权写入的目录；其中允许暂存本次源 ID 供渲染器校验和重新映射，不能上传到公开仓库。渲染器不连接 MCP，也不补齐缺失业务数据。同一份 JSON 先生成筛选页，收到用户选择后再生成正式看板。
 
 ## 顶层字段
 
@@ -39,15 +39,38 @@
 - `clicks` 是非负整数。`spends` 是同一 Profile 原币种的非负数；来源缺失或不可解析时传 `null`，不可填 0。`cvr` 传**百分数值**，例如 5 表示 5%；若领星已证实返回 0–1 比例，先乘 100；单位无法证实时停止 CVR 分析。缺失、越界或不可解析时传 `null`，不能填 0。数值均须有限且在 JavaScript 安全范围内。
 - `dateWindows` 顺序严格为 `7天`、`14天`、`本月`、`上月`，每项使用本次执行日与时区计算的真实 `YYYY-MM-DD` 起止日。`initialWindow` 只允许四项之一；选定窗口无明细时，渲染器自动打开首个有明细的窗口。日期冻结于文件，不在浏览器打开时滚动。
 
-`coverage` 只证明取数范围，不写入页面源 ID。JSON、HTML 都不得放进公开 Skill 包；本说明不指定任何操作系统绝对路径或创建者帐号数据。
+`coverage` 只证明取数范围，不写入页面源 ID。输入 JSON、筛选选择 JSON 和两份 HTML 都不得放进公开 Skill 包；本说明不指定任何操作系统绝对路径或创建者帐号数据。
 
-## 唯一执行方式
+## 两阶段唯一执行方式
 
-在已安装本 Skill 且有 Python 3.8 或更高版本的运行环境中，将 `<skill-dir>` 换成当前安装位置，`<input-json>` 与 `<output-html>` 换成当前执行者自行选择的包外文件路径：
+在已安装本 Skill 且有 Python 3.8 或更高版本的运行环境中，将 `<skill-dir>` 换成当前安装位置，输入与输出均选当前执行者有权访问的包外文件路径。先执行：
 
 ```text
-python <skill-dir>/scripts/render_dashboard.py --input <input-json> --output <output-html>
-python <skill-dir>/scripts/render_dashboard.py --input <input-json> --output <output-html> --check
+python <skill-dir>/scripts/render_dashboard.py --phase selection --input <input-json> --output <selection-html>
+python <skill-dir>/scripts/render_dashboard.py --phase selection --input <input-json> --output <selection-html> --check
 ```
 
-两条命令都成功才交付。`--check` 逐字节核对现有 HTML 与固定模板、本次 Logo 和本次数据。任何错误均停止，不手改输出 HTML 补救；应修正已核实的输入或重新安装完整 Skill 包后再运行。
+将筛选页 HTML 交给用户。页面内的八项筛选基于完整报告填充，指标只含客户搜索词点击量；活动花费、CVR、建议尚未计算。用户确认后，页面下载选择 JSON；下载受限时可从页面文本框复制。选择 JSON 的结构为：
+
+```json
+{
+  "version": 1,
+  "datasetDigest": "本次筛选页自动生成的 SHA-256 指纹",
+  "filters": {
+    "date": "上月", "site": "US", "country": "美国", "store": "p1",
+    "portfolio": "广告组合名称", "campaign": "广告活动名称",
+    "group": "广告组名称", "keyword": "客户搜索词的规范化键"
+  }
+}
+```
+
+`site`、`store`、`portfolio`、`campaign`、`group` 可为 `""`，代表该维度全部；`country` 与 `site` 同为空或为对应国家名称。`store` 的 `p1` 等键是本次文件内临时序号，不是领星源 ID。选择 JSON 由页面生成，不能用示例内容代替。
+
+收到用户返回的选择 JSON 后，保留**同一份**输入 JSON，再执行：
+
+```text
+python <skill-dir>/scripts/render_dashboard.py --phase final --input <input-json> --selection <user-selection-json> --output <final-html>
+python <skill-dir>/scripts/render_dashboard.py --phase final --input <input-json> --selection <user-selection-json> --output <final-html> --check
+```
+
+渲染器核对数据指纹、日期、站点／国家联动、店铺和搜索词是否存在于同一筛选交集。正式文件以所选条件为初始视图，并保留本次完整报告供后续离线改筛选。筛选页和正式页必须使用**不同输出文件**；两阶段各自的 `--check` 均逐字节核对现有 HTML 与固定模板、本次 Logo 和本次数据。任何错误均停止，不手改输出 HTML 补救；缓存遗失或重新取数后须重新生成筛选页供用户选择。
