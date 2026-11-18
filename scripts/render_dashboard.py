@@ -134,7 +134,7 @@ def normalize(raw: dict) -> dict:
     if selected_window not in WINDOWS:
         raise InputError("正式看板必须指定第一阶段确认的统计日期")
     scope = require_dict(raw.get("selectedScope"), "selectedScope")
-    if set(scope) != {"date", "site", "country", "profileRef"} or scope["date"] != selected_window:
+    if set(scope) != {"date", "site", "country"} or scope["date"] != selected_window:
         raise InputError("正式看板的选择范围与统计日期不一致")
     if not isinstance(scope["site"], str) or not isinstance(scope["country"], str):
         raise InputError("选择范围的站点或国家无效")
@@ -145,11 +145,32 @@ def normalize(raw: dict) -> dict:
         raise InputError("选择范围的站点与国家不一致")
     if scope["site"] and any(p["site"] != scope["site"] for p in profiles):
         raise InputError("正式报告包含所选站点之外的店铺")
-    selected_ref = scope["profileRef"]
-    if selected_ref is not None:
-        selected_ref = reference(selected_ref, "selectedScope.profileRef")
-        if selected_ref not in profile_by_ref or len(profiles) != 1:
-            raise InputError("正式报告的店铺与用户选择不一致")
+    authorized_in = require_list(raw.get("authorizedProfiles"), "authorizedProfiles")
+    if not authorized_in:
+        raise InputError("缺少本次完整授权店铺清单")
+    authorized = {}
+    authorized_sites = {}
+    for index, value in enumerate(authorized_in):
+        item = require_dict(value, f"authorizedProfiles[{index}]")
+        ref = reference(item.get("profileRef"), f"authorizedProfiles[{index}].profileRef")
+        site = nonempty(item.get("site"), f"authorizedProfiles[{index}].site").upper()
+        country = nonempty(item.get("country"), f"authorizedProfiles[{index}].country")
+        shop = nonempty(item.get("shop"), f"authorizedProfiles[{index}].shop")
+        if ref in authorized:
+            raise InputError("授权清单中存在重复 Profile")
+        if site in authorized_sites and authorized_sites[site] != country:
+            raise InputError("授权清单中的站点与国家映射冲突")
+        authorized_sites[site] = country
+        authorized[ref] = (site, country, shop)
+    if len(set(authorized_sites.values())) != len(authorized_sites):
+        raise InputError("授权清单中的国家与站点代码无法唯一对应")
+    expected_refs = {ref for ref, item in authorized.items()
+                     if not scope["site"] or item[0] == scope["site"]}
+    if not expected_refs or set(profile_by_ref) != expected_refs:
+        raise InputError("正式报告未覆盖所选国家的全部授权店铺")
+    for ref, profile in profile_by_ref.items():
+        if (profile["site"], profile["country"], profile["shop"]) != authorized[ref]:
+            raise InputError("正式报告中的店铺身份与授权清单不一致")
     coverage_in = require_list(raw.get("coverage"), "coverage")
     coverage = {}
     for index, value in enumerate(coverage_in):
@@ -238,8 +259,7 @@ def normalize(raw: dict) -> dict:
             "profiles": profiles, "rows": rows, "initialWindow": selected_window,
             "timezone": timezone,
             "initialSelection": {"date": selected_window, "site": scope["site"],
-                                 "country": scope["country"],
-                                 "store": profile_by_ref[selected_ref]["key"] if selected_ref else ""}}
+                                 "country": scope["country"], "store": ""}}
 
 
 def render(raw: dict) -> bytes:
