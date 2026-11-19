@@ -24,7 +24,7 @@ TEMPLATE = ROOT / "assets" / "dashboard_template.html"
 LOGO = ROOT / "assets" / "logo.jpg"
 WINDOWS = ("7天", "14天", "本月", "上月")
 # Bumped only when the reviewed canonical template intentionally changes.
-TEMPLATE_SHA256 = "be70cffa80330a33466d52aac3a02b48244af21fbe77f785a7d252758c8793af"
+TEMPLATE_SHA256 = "473f71f36eb715896fff840902f0c293dd55f0fcbe9ea264bbde4b5293ff0352"
 
 
 class InputError(ValueError):
@@ -262,8 +262,9 @@ def normalize(raw: dict) -> dict:
                                  "country": scope["country"], "store": ""}}
 
 
-def render(raw: dict) -> bytes:
+def render(raw: dict, preview: bool = False) -> bytes:
     payload = normalize(raw)
+    payload["preview"] = preview
     template_bytes = TEMPLATE.read_bytes()
     digest = hashlib.sha256(template_bytes).hexdigest()
     if digest != TEMPLATE_SHA256:
@@ -287,6 +288,7 @@ def main() -> int:
     parser.add_argument("--input", required=True, type=Path, help="经领星 MCP 验证的规范化 JSON")
     parser.add_argument("--output", required=True, type=Path, help="单文件离线 HTML，必须在 Skill 包外")
     parser.add_argument("--check", action="store_true", help="只比较既有 HTML 与标准渲染结果")
+    parser.add_argument("--preview", action="store_true", help="仅供包外合成数据模拟，页面标记为模拟数据")
     args = parser.parse_args()
     try:
         source = args.input.resolve()
@@ -298,7 +300,7 @@ def main() -> int:
         if ROOT == output or ROOT in output.parents:
             raise InputError("真实看板输出不得写入公开 Skill 包")
         raw = require_dict(json.loads(source.read_text(encoding="utf-8")), "输入 JSON")
-        generated = render(raw)
+        generated = render(raw, preview=args.preview)
         if args.check:
             if output.read_bytes() != generated:
                 raise InputError("既有 HTML 与标准模板渲染结果不一致")

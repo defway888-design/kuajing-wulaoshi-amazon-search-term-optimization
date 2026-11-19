@@ -25,13 +25,11 @@ h1{margin:0;font-size:clamp(23px,2.5vw,31px);font-weight:800;line-height:1.24;ov
 .panel.pink{background:rgba(220,96,158,.90)}
 .panel-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px}
 h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
-.filters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
 .filter-card{min-width:0;display:grid;gap:6px;padding:10px;background:linear-gradient(145deg,rgba(183,126,193,.96),rgba(224,91,157,.94));border:1px solid #3f1a58;border-radius:9px}
 .filter-card label{font-size:12px;font-weight:800;color:#2a1050;overflow-wrap:anywhere}
 .filter-card select{width:100%;min-width:0;min-height:39px;padding:8px 9px;border:1px solid #3f1a58;border-radius:7px;background:rgba(255,255,255,.94);color:#261133}
 .filter-card select{overflow:hidden;text-overflow:ellipsis}
-.filter-card.keyword-card{grid-column:1/-1}
-.filter-status{margin-top:10px;color:#2a1050;font-size:12px;font-weight:800;text-align:right}
+.filter-status{margin:0;color:#2a1050;font-size:12px;font-weight:800;text-align:left;line-height:1.5}
 [hidden]{display:none!important}
 .detail-panel{min-height:530px}
 .detail-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -42,61 +40,88 @@ h2{margin:0;font-size:19px;line-height:1.3;font-weight:800}
 .swatch.spend{background:var(--blue)}.swatch.cvr{background:var(--orange)}
 .detail-note{margin:8px 0 0;font-size:12px;color:#fff}
 .charts{display:grid;gap:12px;margin-top:12px}
-.chart-card{min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:rgba(83,39,139,.48)}
-.chart-card h3{margin:0 0 3px;font-size:15px;overflow-wrap:anywhere}
-.chart-meta{margin:0 0 6px;font-size:12px;color:#fff}
 .chart-scroll{max-width:100%;overflow-x:auto;overflow-y:hidden;scrollbar-color:#ebc8f3 #4a246a}
 .chart-scroll svg{display:block;max-width:none}
-.chart-hit{cursor:help}
+.chart-hit{cursor:pointer}
 .chart-text{fill:#fff;font-family:"Microsoft YaHei","PingFang SC",Arial,sans-serif}
 .suggestions{margin-top:14px}
-.suggestions h2{margin-bottom:10px}
-.reco-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.reco-card{min-width:0;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;padding:10px 12px;background:rgba(83,39,139,.5)}
-.reco-card.good{border-left-color:#39d98a}.reco-card.test{border-left-color:var(--blue)}.reco-card.reduce{border-left-color:var(--orange)}.reco-card.check{border-left-color:var(--yellow)}
-.reco-card strong,.reco-card span{overflow-wrap:anywhere}
-.reco-card strong{display:block;font-size:13px}
-.reco-card p{margin:5px 0 0;font-size:12px}
 .reco-tag{display:inline-block;padding:2px 7px;margin-left:5px;border-radius:999px;background:rgba(255,255,255,.18);font-size:11px;vertical-align:middle}
 .empty{padding:28px 12px;text-align:center;font-weight:800}
 .footer{padding:16px 4px;text-align:center;font-size:12px;color:#fff}
 .tooltip{position:fixed;z-index:100;display:none;max-width:min(320px,calc(100vw - 20px));padding:10px 12px;border:1px solid var(--yellow);border-radius:8px;background:#261133;color:#fff;box-shadow:0 10px 24px rgba(25,4,40,.45);pointer-events:none;font-size:12px}
 .tooltip strong{display:block;margin-bottom:5px;color:var(--yellow);font-size:13px;overflow-wrap:anywhere}
 .tooltip div{overflow-wrap:anywhere}
-@media(max-width:1200px){.filters{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:900px){.detail-panel{min-height:0}.reco-grid{grid-template-columns:1fr}.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:650px){.dash{padding:8px}.title-tile{align-items:flex-start;flex-direction:column;padding:16px}.title-actions{justify-content:space-between;width:100%}.brand-logo{width:153px;height:60px}.filters{grid-template-columns:1fr}.panel{padding:12px}h1{font-size:24px}}
+@media(max-width:900px){.detail-panel{min-height:0}.reco-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.dash{padding:8px}.title-tile{align-items:flex-start;flex-direction:column;padding:16px}.title-actions{justify-content:space-between;width:100%}.brand-logo{width:153px;height:60px}.panel{padding:12px}h1{font-size:24px}}
+
+
+.filter-shell{display:grid;gap:12px}
+.scope-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;color:#321549;font-size:12px;font-weight:800}
+.scope-label{font-size:12px}
+.scope-value{display:inline-flex;align-items:center;min-height:32px;padding:6px 10px;border:1px solid #633070;border-radius:7px;background:rgba(255,255,255,.58);color:#321549}
+.primary-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(230px,1fr);gap:10px}
+.primary-grid .filter-card{grid-column:auto}
+.advanced-filters{border:1px solid #6d2d74;border-radius:9px;background:rgba(95,35,133,.18);overflow:hidden}
+.advanced-filters>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer;padding:11px 13px;font-size:13px;font-weight:800;color:#251035}
+.advanced-filters>summary::-webkit-details-marker,.shop-details>summary::-webkit-details-marker,.reco-detail>summary::-webkit-details-marker{display:none}
+.advanced-filters>summary:focus-visible,.shop-details>summary:focus-visible,.reco-detail>summary:focus-visible{outline:3px solid var(--yellow);outline-offset:-3px}
+.advanced-filters>summary .disclosure-caret,.shop-details>summary .disclosure-caret{display:inline-block;transition:transform .15s ease}
+.advanced-filters[open]>summary .disclosure-caret,.shop-details[open]>summary .disclosure-caret{transform:rotate(90deg)}
+.advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 10px 10px}
+.active-count{font-weight:800;color:#fff;background:#6b248a;border-radius:999px;padding:3px 8px;font-size:11px}
+.term-facts{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px}
+.term-fact{border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;background:rgba(83,39,139,.38)}
+.shop-details{border:1px solid var(--line);border-radius:10px;background:rgba(83,39,139,.48);min-width:0;overflow:hidden}
+.shop-details>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;list-style:none;min-width:0}
+.shop-summary-main{display:grid;gap:2px;min-width:0}
+.shop-name{font-size:15px;font-weight:800;overflow-wrap:anywhere}
+.shop-meta{font-size:12px;line-height:1.4}
+.shop-details .chart-scroll{margin:0 12px 12px}
+.shop-details .suggestions{margin:0 12px 12px}
+.shop-details .suggestions h3{font-size:15px;margin:0 0 8px}
+.reco-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.reco-detail{min-width:0;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:8px;background:rgba(53,23,101,.54);overflow:hidden}
+.reco-detail.good{border-left-color:#39d98a}.reco-detail.reduce{border-left-color:var(--orange)}.reco-detail.check{border-left-color:var(--yellow)}
+.reco-detail>summary{display:grid;gap:4px;list-style:none;cursor:pointer;padding:10px 12px}
+.reco-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+.reco-name{font-size:12px;font-weight:800;overflow-wrap:anywhere}
+.reco-tag{flex:none;margin:0;white-space:nowrap}
+.reco-metrics{font-size:11px;color:#fff;overflow-wrap:anywhere}
+.reco-reason{border-top:1px solid var(--line);padding:9px 12px 11px;font-size:12px;line-height:1.5}
+@media(max-width:900px){.primary-grid{grid-template-columns:1fr}.advanced-grid{grid-template-columns:1fr 1fr}.reco-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.advanced-grid{grid-template-columns:1fr}.shop-details>summary{align-items:flex-start}.reco-title{flex-wrap:wrap}.scope-row{gap:6px}}
 </style>
 </head>
 <body>
 <main class="dash">
   <header class="tile title-tile">
     <h1>跨境吴老师AMAZON广告搜索词优化看板</h1>
-    <div class="title-actions">
-      <span class="brand-logo"><img src="data:image/jpeg;base64,__LOGO_BASE64__" alt="跨境吴老师 Logo"></span>
-    </div>
+    <div class="title-actions"><span class="brand-logo"><img src="data:image/jpeg;base64,__LOGO_BASE64__" alt="跨境吴老师 Logo"></span></div>
   </header>
   <section class="panel pink" aria-labelledby="filterTitle">
     <div class="panel-head"><h2 id="filterTitle">筛选条件</h2><button class="action-button" id="resetFilters" type="button">重置筛选</button></div>
-    <div class="filters">
-      <div class="filter-card"><label for="dateFilter">统计日期</label><select id="dateFilter"></select></div>
-      <div class="filter-card"><label for="countryFilter">国家</label><select id="countryFilter"></select></div>
-      <div class="filter-card"><label for="storeFilter">店铺</label><select id="storeFilter"></select></div>
-      <div class="filter-card" id="portfolioCard"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
-      <div class="filter-card" id="campaignCard"><label for="campaignFilter">广告活动名称</label><select id="campaignFilter"></select></div>
-      <div class="filter-card" id="groupCard"><label for="groupFilter">广告组名称</label><select id="groupFilter"></select></div>
-      <div class="filter-card keyword-card" id="keywordCard"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
+    <div class="filter-shell">
+      <div class="scope-row" aria-label="本次固定查询范围"><span class="scope-label">本次范围</span><span class="scope-value" id="scopeDate"></span><span class="scope-value" id="scopeCountry"></span></div>
+      <div class="primary-grid">
+        <div class="filter-card"><label for="keywordFilter">客户搜索词（按点击量从高到低）</label><select id="keywordFilter"></select></div>
+        <div class="filter-card"><label for="storeFilter">店铺</label><select id="storeFilter"></select></div>
+      </div>
+      <details class="advanced-filters" id="advancedFilters">
+        <summary><span>更多筛选 <span class="active-count" id="activeCount">已启用 0 项</span></span><span class="disclosure-caret" aria-hidden="true">›</span></summary>
+        <div class="advanced-grid">
+          <div class="filter-card"><label for="portfolioFilter">广告组合名称</label><select id="portfolioFilter"></select></div>
+          <div class="filter-card"><label for="campaignFilter">广告活动名称</label><select id="campaignFilter"></select></div>
+          <div class="filter-card"><label for="groupFilter">广告组名称</label><select id="groupFilter"></select></div>
+        </div>
+      </details>
+      <div class="filter-status" id="filterStatus" aria-live="polite"></div>
     </div>
-    <div class="filter-status" id="filterStatus" aria-live="polite"></div>
   </section>
   <section class="panel detail-panel" id="detailPanel" aria-labelledby="detailTitle">
-    <div class="detail-top">
-      <h2 id="detailTitle">当前关键词：<span class="selected-term" id="selectedTerm">—</span></h2>
-      <div class="legend" aria-label="图例"><span><i class="swatch spend"></i>花费</span><span><i class="swatch cvr"></i>点击加权转化率</span></div>
-    </div>
+    <div class="detail-top"><h2 id="detailTitle">当前关键词：<span class="selected-term" id="selectedTerm">—</span></h2><div class="legend" aria-label="图例"><span><i class="swatch spend"></i>花费</span><span><i class="swatch cvr"></i>点击加权转化率</span></div></div>
+    <div class="term-facts" id="termFacts"></div>
     <p class="detail-note" id="detailNote"></p>
     <div class="charts" id="charts"></div>
-    <div class="suggestions"><h2>当前关键词优化建议</h2><div class="reco-grid" id="recommendations"></div></div>
   </section>
   <footer class="footer" id="pageFooter">跨境吴老师 · 领星 MCP 商品推广客户搜索词报告 · 日期窗口按生成时冻结</footer>
 </main>
@@ -110,6 +135,8 @@ const profiles=PAYLOAD.profiles;
 const rows=PAYLOAD.rows;
 const initial=PAYLOAD.initialSelection||{};
 const state={date:initial.date||PAYLOAD.initialWindow,site:initial.site||"",store:initial.store||"",portfolio:initial.portfolio||"",campaign:initial.campaign||"",group:initial.group||"",selected:initial.keyword||""};
+const openShops=new Set();
+let disclosureInitialized=false;
 const el=id=>document.getElementById(id);
 const fmtInt=n=>new Intl.NumberFormat("zh-CN").format(n);
 const fmtMoney=n=>n===null?"不完整":new Intl.NumberFormat("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
@@ -123,14 +150,11 @@ function setOptions(select,items,value,allLabel="全部"){
   return select.value;
 }
 function renderFilters(){
-  const dateSelect=el("dateFilter");dateSelect.replaceChildren();
-  for(const item of dateWindows)dateSelect.add(new Option(item.key,item.key));
-  if(!dateWindows.some(item=>item.key===state.date))state.date=PAYLOAD.initialWindow;
-  dateSelect.value=state.date;
   const windowDef=dateWindows.find(item=>item.key===state.date);
-  const dateRows=rows.filter(r=>r.window===state.date);
-  state.site=setOptions(el("countryFilter"),sites.map(s=>({value:s.code,label:s.country})),state.site,"全部国家");
-  const siteRows=dateRows.filter(r=>!state.site||r.site===state.site);
+  el("scopeDate").textContent="统计日期："+state.date+"（"+windowDef.start+" 至 "+windowDef.end+"）";
+  const country=state.site?sites.find(s=>s.code===state.site)?.country:"全部国家";
+  el("scopeCountry").textContent="国家："+(country||"未识别")+(state.site?" / "+state.site:"");
+  const siteRows=rows.filter(r=>r.window===state.date&&(!state.site||r.site===state.site));
   const storeOpts=profiles.filter(p=>!state.site||p.site===state.site).map(p=>({value:p.key,label:p.shop+" · "+p.site}));
   state.store=setOptions(el("storeFilter"),storeOpts,state.store,"全部店铺");
   const storeRows=siteRows.filter(r=>!state.store||r.profile===state.store);
@@ -139,9 +163,9 @@ function renderFilters(){
   state.campaign=setOptions(el("campaignFilter"),unique(portfolioRows.map(r=>r.campaign).filter(v=>v!=="活动信息不完整")).map(v=>({value:v,label:v})),state.campaign,"全部广告活动");
   const campaignRows=portfolioRows.filter(r=>!state.campaign||r.campaign===state.campaign);
   state.group=setOptions(el("groupFilter"),unique(campaignRows.map(r=>r.group).filter(Boolean)).map(v=>({value:v,label:v})),state.group,"全部广告组");
+  el("activeCount").textContent="已启用 "+[state.portfolio,state.campaign,state.group].filter(Boolean).length+" 项";
 }
 function filteredRows(){
-  const windowDef=dateWindows.find(item=>item.key===state.date);
   return rows.filter(r=>r.window===state.date&&(!state.site||r.site===state.site)&&(!state.store||r.profile===state.store)&&(!state.portfolio||r.portfolio===state.portfolio)&&(!state.campaign||r.campaign===state.campaign)&&(!state.group||r.group===state.group));
 }
 function aggregateTerms(source){
@@ -186,7 +210,8 @@ function campaignAgg(source){
     .sort((a,b)=>b.clicks-a.clicks||a.name.localeCompare(b.name,"zh-CN"));
 }
 const tooltip=el("tooltip");
-function hideTooltip(){tooltip.style.display="none";tooltip.setAttribute("aria-hidden","true");}
+let pinnedNode=null;
+function hideTooltip(force=false){if(pinnedNode&&!force)return;tooltip.style.display="none";tooltip.setAttribute("aria-hidden","true");}
 function showTooltip(info,event,node){
   el("tipTitle").textContent=info.name;
   el("tipBody").textContent=info.shop+" · "+info.site+"｜"+info.portfolio+"｜"+fmtInt(info.clicks)+" 点击｜"+info.currency+" "+fmtMoney(info.spends)+" 花费｜"+fmtRate(info.cvr,info.clicks)+" 点击加权转化率";
@@ -200,18 +225,18 @@ function showTooltip(info,event,node){
 }
 function bindTip(node,info){
   node.classList.add("chart-hit");node.setAttribute("tabindex","0");
-  node.setAttribute("role","img");
+  node.setAttribute("role","button");
   node.setAttribute("aria-label",info.shop+" "+info.site+" "+info.portfolio+" "+info.name+"，点击 "+info.clicks+"，花费 "+info.currency+" "+fmtMoney(info.spends)+"，点击加权转化率 "+fmtRate(info.cvr,info.clicks));
-  node.addEventListener("mouseenter",event=>showTooltip(info,event,node));
-  node.addEventListener("mousemove",event=>showTooltip(info,event,node));
+  node.addEventListener("mouseenter",event=>{if(!pinnedNode)showTooltip(info,event,node);});
+  node.addEventListener("mousemove",event=>{if(!pinnedNode)showTooltip(info,event,node);});
   node.addEventListener("mouseleave",hideTooltip);
-  node.addEventListener("focus",()=>showTooltip(info,null,node));
+  node.addEventListener("focus",()=>{if(!pinnedNode||pinnedNode===node)showTooltip(info,null,node);});
   node.addEventListener("blur",hideTooltip);
+  const toggle=event=>{event.stopPropagation();if(pinnedNode===node){pinnedNode=null;hideTooltip(true);}else{pinnedNode=node;showTooltip(info,event,node);}};
+  node.addEventListener("click",toggle);
+  node.addEventListener("keydown",event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle(event);}});
 }
 function drawChart(profile,items){
-  const card=textNode("article","chart-card","");
-  card.append(textNode("h3","",profile.shop+" · "+profile.site+" / "+profile.country));
-  card.append(textNode("p","chart-meta",fmtInt(items.reduce((a,x)=>a+x.clicks,0))+" 点击 · 花费单位 "+profile.currency+" · "+items.length+" 个广告活动"));
   const scroll=textNode("div","chart-scroll","");
   const width=Math.max(690,items.length*150+110,el("detailPanel").clientWidth-54),height=340;
   const chart=svg("svg",{viewBox:"0 0 "+width+" "+height,width,height,"aria-label":profile.shop+" "+profile.site+" 花费与转化率图"});
@@ -247,40 +272,55 @@ function drawChart(profile,items){
     const hit=svg("circle",{cx,cy,r:18,fill:"transparent",stroke:"none","pointer-events":"all"});
     bindTip(hit,info);chart.append(hit);
   }
-  scroll.append(chart);scroll.addEventListener("scroll",hideTooltip,{passive:true});card.append(scroll);
+  scroll.append(chart);scroll.addEventListener("scroll",()=>{pinnedNode=null;hideTooltip(true);},{passive:true});
+  return scroll;
+}
+function renderRecommendations(profile,items){
+  const container=textNode("div","reco-grid","");
+  const eligible=items.filter(x=>x.clicks>=20&&x.spends!==null&&x.cvr!==null&&x.cvr>0&&!x.incompleteIdentity).sort((a,b)=>b.cvr-a.cvr);
+  const winner=eligible.length>=2&&eligible[0].cvr>eligible[1].cvr?eligible[0].key:null;
+  for(const item of items){
+    let kind="test",status="保留测试",reason="样本或对照不足，继续观察。";
+    if(item.clicks===0){kind="check";status="样本不足";reason="该活动当前筛选范围内没有点击。";}
+    else if(item.cvr===null||item.spends===null||item.incompleteIdentity){kind="check";status="数据待核对";reason="活动身份或花费／转化率不完整，暂不提供操作建议。";}
+    else if(item.cvr===0&&item.clicks>=20){kind="check";status="数据待核对";reason="零转化且达到 20 点击；归因成熟度未核实，暂不执行暂停／否定。";}
+    else if(winner===item.key){kind="good";status="主推并倾斜候选";reason="同店铺同词的合格活动中转化率最高；须人工复核。";}
+    else if(winner&&item.clicks>=20){kind="reduce";status="降低出价／限流候选";reason="同店铺同词有转化率更高的合格活动；须人工复核。";}
+    const card=textNode("details","reco-detail "+kind,"");
+    const summary=textNode("summary","","");
+    const title=textNode("span","reco-title","");
+    title.append(textNode("span","reco-name",item.portfolio+" / "+item.name),textNode("span","reco-tag",status));
+    summary.append(title,textNode("span","reco-metrics",fmtInt(item.clicks)+" 点击 · "+profile.currency+" "+fmtMoney(item.spends)+" 花费 · "+fmtRate(item.cvr,item.clicks)+" 转化率"));
+    card.append(summary,textNode("div","reco-reason",reason));
+    container.append(card);
+  }
+  return container;
+}
+function drawShop(profile,items){
+  const card=textNode("details","shop-details","");
+  card.open=openShops.has(profile.key);
+  const summary=textNode("summary","","");
+  const main=textNode("span","shop-summary-main","");
+  const pending=items.filter(x=>x.spends===null||x.cvr===null||x.incompleteIdentity||(x.cvr===0&&x.clicks>=20)).length;
+  main.append(textNode("span","shop-name",profile.shop+" · "+profile.site+" / "+profile.country),
+              textNode("span","shop-meta",fmtInt(items.reduce((n,x)=>n+x.clicks,0))+" 点击 · "+items.length+" 个广告活动 · "+profile.currency+" 花费"+(pending?" · "+pending+" 项待核对":"")));
+  summary.append(main,textNode("span","disclosure-caret","›"));
+  const suggestions=textNode("div","suggestions","");
+  suggestions.append(textNode("h3","","当前关键词优化建议"),renderRecommendations(profile,items));
+  card.append(summary,drawChart(profile,items),suggestions);
+  card.addEventListener("toggle",()=>{if(card.open)openShops.add(profile.key);else openShops.delete(profile.key);});
   return card;
 }
-function renderRecommendations(groups){
-  const container=el("recommendations");container.replaceChildren();
-  if(!groups.length){container.append(textNode("div","empty","当前筛选没有可比较的活动"));return;}
-  for(const {profile,items} of groups){
-    const eligible=items.filter(x=>x.clicks>=20&&x.spends!==null&&x.cvr!==null&&x.cvr>0&&!x.incompleteIdentity).sort((a,b)=>b.cvr-a.cvr);
-    const winner=eligible.length>=2&&eligible[0].cvr>eligible[1].cvr?eligible[0].key:null;
-    for(const item of items){
-      let kind="test",status="保留测试",reason="样本或对照不足，继续观察。";
-      if(item.clicks===0){kind="check";status="样本不足";reason="该活动当前筛选范围内没有点击。";}
-      else if(item.cvr===null||item.spends===null||item.incompleteIdentity){kind="check";status="数据待核对";reason="活动身份或花费／转化率不完整，暂不提供操作建议。";}
-      else if(item.cvr===0&&item.clicks>=20){kind="check";status="数据待核对";reason="零转化且达到 20 点击；归因成熟度未核实，暂不执行暂停／否定。";}
-      else if(winner===item.key){kind="good";status="主推并倾斜候选";reason="同店铺同词的合格活动中转化率最高；须人工复核。";}
-      else if(winner&&item.clicks>=20){kind="reduce";status="降低出价／限流候选";reason="同店铺同词有转化率更高的合格活动；须人工复核。";}
-      const card=textNode("article","reco-card "+kind,"");
-      const title=textNode("strong","",profile.shop+" · "+profile.site+"｜"+item.portfolio+" / "+item.name);
-      title.append(textNode("span","reco-tag",status));
-      card.append(title,textNode("p","",fmtInt(item.clicks)+" 点击 · "+profile.currency+" "+fmtMoney(item.spends)+" 花费 · "+fmtRate(item.cvr,item.clicks)+" 转化率。"+reason));
-      container.append(card);
-    }
-  }
-}
 function render(){
-  hideTooltip();
+  pinnedNode=null;hideTooltip(true);
   const source=filteredRows(),terms=aggregateTerms(source);
   const term=renderKeywordFilter(terms);
-  const windowDef=dateWindows.find(item=>item.key===state.date);
-  el("filterStatus").textContent=windowDef.start+" 至 "+windowDef.end+" · "+PAYLOAD.timezone+" · "+fmtInt(terms.length)+" 个可选关键词"+(term?" · 当前第 "+fmtInt(terms.indexOf(term)+1)+" 位 · "+fmtInt(term.clicks)+" 次点击":"");
+  el("filterStatus").textContent=(PAYLOAD.preview?"版式预览 · 模拟数据":"本次报告")+" · "+PAYLOAD.timezone+" · "+fmtInt(terms.length)+" 个可选关键词";
   el("selectedTerm").textContent=term?.query||"—";
-  const charts=el("charts");charts.replaceChildren();
-  el("detailNote").textContent=term?"按店铺／站点分开展示原币花费；橙线为点击加权转化率。悬停或聚焦图形可查看具体数值。":"当前筛选没有可展示的客户搜索词。";
-  if(!term){charts.append(textNode("div","empty","请选择其他筛选条件"));renderRecommendations([]);return;}
+  const facts=el("termFacts"),charts=el("charts");facts.replaceChildren();charts.replaceChildren();
+  el("detailNote").textContent=term?"按店铺／站点分开展示原币花费；橙线为点击加权转化率。悬停、聚焦或点击图形可查看具体数值。":"当前筛选没有可展示的客户搜索词。";
+  if(!term){charts.append(textNode("div","empty","请调整店铺或更多筛选条件"));return;}
+  facts.append(textNode("span","term-fact","当前第 "+fmtInt(terms.indexOf(term)+1)+" 位"),textNode("span","term-fact",fmtInt(term.clicks)+" 次点击"));
   const termRows=source.filter(r=>r.query.trim().toLocaleLowerCase("en")===term.key);
   const groups=[];
   for(const profile of profiles){
@@ -288,20 +328,22 @@ function render(){
     if(!subset.length)continue;
     const items=campaignAgg(subset);
     groups.push({profile,items});
-    charts.append(drawChart(profile,items));
   }
-  renderRecommendations(groups);
+  groups.sort((a,b)=>b.items.reduce((n,x)=>n+x.clicks,0)-a.items.reduce((n,x)=>n+x.clicks,0)||a.profile.shop.localeCompare(b.profile.shop,"zh-CN"));
+  if(!disclosureInitialized){openShops.clear();if(groups.length)openShops.add(groups[0].profile.key);disclosureInitialized=true;}
+  for(const {profile,items} of groups)charts.append(drawShop(profile,items));
 }
-el("dateFilter").addEventListener("change",event=>{state.date=event.target.value;renderFilters();render();});
-el("countryFilter").addEventListener("change",event=>{state.site=event.target.value;state.store="";state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
-el("storeFilter").addEventListener("change",event=>{state.store=event.target.value;state.portfolio="";state.campaign="";state.group="";renderFilters();render();});
-el("portfolioFilter").addEventListener("change",event=>{state.portfolio=event.target.value;state.campaign="";state.group="";renderFilters();render();});
-el("campaignFilter").addEventListener("change",event=>{state.campaign=event.target.value;state.group="";renderFilters();render();});
-el("groupFilter").addEventListener("change",event=>{state.group=event.target.value;renderFilters();render();});
-el("keywordFilter").addEventListener("change",event=>{state.selected=event.target.value;render();});
-el("resetFilters").addEventListener("click",()=>{Object.assign(state,{date:PAYLOAD.initialWindow,site:"",store:"",portfolio:"",campaign:"",group:"",selected:""});renderFilters();render();});
-window.addEventListener("scroll",hideTooltip,{passive:true});
-window.addEventListener("resize",()=>{hideTooltip();render();},{passive:true});
+function changed(){openShops.clear();disclosureInitialized=false;renderFilters();render();}
+el("storeFilter").addEventListener("change",event=>{state.store=event.target.value;state.portfolio="";state.campaign="";state.group="";changed();});
+el("portfolioFilter").addEventListener("change",event=>{state.portfolio=event.target.value;state.campaign="";state.group="";changed();});
+el("campaignFilter").addEventListener("change",event=>{state.campaign=event.target.value;state.group="";changed();});
+el("groupFilter").addEventListener("change",event=>{state.group=event.target.value;changed();});
+el("keywordFilter").addEventListener("change",event=>{state.selected=event.target.value;openShops.clear();disclosureInitialized=false;render();});
+el("resetFilters").addEventListener("click",()=>{Object.assign(state,{store:"",portfolio:"",campaign:"",group:"",selected:""});openShops.clear();disclosureInitialized=false;el("advancedFilters").open=false;renderFilters();render();});
+document.addEventListener("click",event=>{if(!event.target.closest(".chart-hit")){pinnedNode=null;hideTooltip(true);}});
+window.addEventListener("scroll",()=>{pinnedNode=null;hideTooltip(true);},{passive:true});
+window.addEventListener("resize",()=>{pinnedNode=null;hideTooltip(true);render();},{passive:true});
+if(PAYLOAD.preview)el("pageFooter").textContent="跨境吴老师 · 模拟数据，仅供版式预览 · 单文件离线看板";
 renderFilters();render();
 </script>
 </body>

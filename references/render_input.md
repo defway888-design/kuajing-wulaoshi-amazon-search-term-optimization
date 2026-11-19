@@ -43,3 +43,5 @@ python <skill-dir>/scripts/render_dashboard.py --input <report-input-json> --out
 ```
 
 正式 HTML 生成后必须通过 `--check`，再在同一对话提供文件链接；文件是完整离线 HTML，不依赖运行时服务。页面只含所选日期窗口的数据，若需其他窗口须在当前对话重新选择并运行。模板指纹或逐字节校验失败时停止，不能手改 HTML 补救。
+
+`--preview` 只供包外合成输入生成模拟版，页内会标注“模拟数据”；真实领星报告生成和 `--check` 均不得带该参数。
